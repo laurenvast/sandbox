@@ -1,0 +1,26 @@
+#fly {
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 1;
+}
+
+#umbrella {}
+
+#girl {}
+
+#girlnumb {
+  position: fixed;
+  width: 10%;
+  left: 50%;
+  bottom: 40%;
+    z-index: 9;
+
+}
+
+#city {
+  position: fixed;
+  width: 1400px;
+  display: block;
+
+}

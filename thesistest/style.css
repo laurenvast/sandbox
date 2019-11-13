@@ -1,0 +1,25 @@
+body {
+	margin: 0; 
+	height: 100%; 
+	overflow: hidden;
+}
+
+
+.instruction {
+	font-family: sans-serif;
+	font-size: 30px;
+	margin: 0;
+	position: absolute;
+	top: 50%;
+	left: 50%;
+	margin-right: -50%;
+	transform: translate(-50%, -50%);
+	text-align: center;
+}
+
+#shake #blow {
+	display: block;
+	position: absolute;
+	top: 0px;
+	left: 0px;
+}

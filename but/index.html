@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+  <title>BUT</title>
+  <script src="http://code.responsivevoice.org/responsivevoice.js"></script>
+  <script src="libraries/p5.js" type="text/javascript"></script>
+  <script src="libraries/p5.dom.js" type="text/javascript"></script>
+  <script src="libraries/p5.sound.js" type="text/javascript"></script>
+  <link href='https://fonts.googleapis.com/css?family=Sue+Ellen+Francisco' rel='stylesheet' type='text/css'>
+  <link rel="stylesheet" type="text/css" href="style.css">
+  <script src="sketch.js" type="text/javascript"></script>
+  <script src="gmailAPI.js" type="text/javascript"></script>
+  <script src="listMessages.js" type="text/javascript"></script>
+  <script src="https://apis.google.com/js/client.js?onload=checkAuth"></script>
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.2.2/jquery.min.js"></script>
+
+  <style>
+    body {
+      padding: 0;
+      margin: 0;
+    }
+    
+    canvas {
+      vertical-align: top;
+    }
+  </style>
+</head>
+
+<body style="background-color:#000; overflow-y:hidden;">
+  <div id="authorize-div" style="display: none">
+    <span>Authorize access to Gmail API</span>
+    <!--Button for the user to click to initiate auth sequence -->
+    <button id="authorize-button" onclick="handleAuthClick(event)">
+      Authorize
+    </button>
+  </div>
+  <div style="height:100%; overflow: hidden;">
+    <h1 class="poem"><br>BUT<br><br>Carried an ☂ but it did not  <svg version="1.1" id="Layer_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px"
+	 width="35px" height="33px" viewBox="0 0 58.917 46.375" enable-background="new 0 0 58.917 46.375" xml:space="preserve">
+<path fill="#FFFFFF" d="M29.327,29.029c-6.987,0-13.985-0.239-20.956,0.093c-3.959,0.189-6.512-0.771-7.01-4.929
+	c-0.501-4.177,0.616-8.814,4.981-8.903c6.03-0.123,6.863-3.749,8.962-7.836c4.398-8.565,18.741-8.22,25.513,0.574
+	c2.23,2.901,4.412,4.465,8.062,5.023c6.434,0.983,10.035,8.016,7.912,14.112c-0.787,2.257-2.416,1.855-4.008,1.858
+	C44.963,29.038,37.146,29.029,29.327,29.029"/>
+<path fill="#FFFFFF" d="M22.94,31.95c-0.32,2.527,0.48,5.046-2.438,5.698c-0.957,0.214-2.065-0.669-2.016-1.737
+	C18.599,33.471,19.951,32.048,22.94,31.95"/>
+<path fill="#FFFFFF" d="M35.863,31.955c-0.088,2.263,0.875,4.803-2.234,5.672c-0.9,0.253-2.033-0.542-2.018-1.679
+	C31.65,33.428,33.121,32.167,35.863,31.955"/>
+<path fill="#FFFFFF" d="M13.567,44.625c-1.315-0.279-2.172-1.06-1.943-2.381c0.299-1.719,1.32-3.059,3.172-3.269
+	c1.653-0.188,1.104,1.18,1.133,2.025C15.989,42.747,15.648,44.275,13.567,44.625"/>
+<path fill="#FFFFFF" d="M27.736,38.938c1.885,0.096,1.192,1.359,1.214,2.177c0.046,1.757-0.274,3.477-2.507,3.419
+	c-0.985-0.026-1.683-0.944-1.585-2.138C25.016,40.47,26.338,39.602,27.736,38.938"/>
+</svg><br>Went to a store but it did not open<br>Told a joke but had no laughter<br>Expressed affection but had no return</h1>
+    <table class="poem" id="line" align="center"></table>
+    <h1 class="info"><span id="blink">|</span><br>Continue this poem,<br><span style="color: #999">text</span> your line with a "<span style="color: #999">but</span>" to <span style="color: #999">(626) 695-8020</span></h1>
+  </div>
+
+  <pre id="output "></pre>
+</body>
+
+</html>

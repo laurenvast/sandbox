@@ -1,0 +1,85 @@
+.info {
+  /*position: absolute;*/
+  /*left: 0;*/
+  /*right: 0;*/
+  /*margin-left: auto;*/
+  /*margin-right: auto;*/
+  /*bottom: 100px;*/
+  font-family: Times New Roman;
+  font-weight: normal;
+  font-size: 17px;
+  text-align: center;
+  line-height: 180%;
+  color: #666;
+}
+
+@-webkit-keyframes blink-caret {
+    from, to { border-color: transparent }
+    50% { border-color: white }
+}
+
+.poem {
+  font-family: 'Sue Ellen Francisco', cursive;
+  font-weight: 100;
+  font-size: 40px;
+  text-align: center;
+  line-height: 180%;
+  color: #fff;
+}
+
+/*#line {*/
+/*  border-right: .07em solid white;*/
+/*  -webkit-animation: blink-caret 1s step-end infinite;  */
+/*}*/
+
+@keyframes typing { from { width: 0; } }
+@keyframes blink-caret { 50% { border-color: transparent; } }
+
+#blink {
+  font-family: 'Sue Ellen Francisco', cursive;
+  font-weight: normal;
+  font-size: 40px;
+  text-align: center;
+  line-height: 180%;
+  color: #fff;
+  position: relative;
+  margin-left: 0px;
+  -webkit-animation: blink-animation 1s steps(5, start) infinite;
+}
+
+@-webkit-keyframes blink-animation {
+  to {
+    visibility: hidden;
+  }
+}
+
+tr.new-item {
+  opacity: 0;
+  -webkit-animation: new-item-animation .3s linear forwards;
+}
+
+@keyframes new-item-animation {
+  from {
+    opacity: 0;
+    -webkit-transform: scale(0);
+  }
+  to {
+    opacity: 1;
+    -webkit-transform: scale(1);
+  }
+}
+
+tr.removed-item {
+  -webkit-animation: removed-item-animation .6s cubic-bezier(.55, -0.04, .91, .94) forwards;
+}
+
+@keyframes removed-item-animation {
+  from {
+    opacity: 1;
+    -webkit-transform: scale(1);
+  }
+  to {
+    -webkit-transform: scale(0);
+    opacity: 0;
+  }
+}
