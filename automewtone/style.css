@@ -1,0 +1,313 @@
+@import url("https://fonts.googleapis.com/css2?family=Pragati+Narrow:wght@400;700&family=Sansita+Swashed:wght@700&display=swap");
+* {
+  font-family: 'Pragati Narrow', sans-serif;
+}
+
+:root {
+  --note-system: #FF6B6B;
+  --note-user: #FFD166;
+  --keyboard-mode: var(--note-system);
+  background: #4ECDC4;
+  overflow: hidden;
+}
+
+h1 {
+  font-size: 48px;
+  margin-bottom: 80px;
+  color: var(--note-system);
+  text-shadow: 0 5px 0 var(--note-user);
+  font-family: 'Sansita Swashed', cursive;
+}
+
+h2 {
+  font-size: 32px;
+  margin-bottom: 32px;
+  color: #1A535C;
+}
+
+p {
+  font-size: 24px;
+  margin: 0;
+  color: #1A535C;
+}
+
+.container {
+  display: flex;
+  justify-content: center;
+  height: 100%;
+}
+.container .prompt, .container .CTA {
+  display: none;
+  opacity: 0;
+  transform: scale(0.5);
+  transition: all 300ms ease-out;
+}
+.container.onboarding .prompt {
+  display: block;
+}
+
+.keyandnote {
+  margin: 0 auto;
+  position: absolute;
+  bottom: 40px;
+  transition: bottom 350ms ease;
+}
+
+.keyboard {
+  font-size: 14px;
+  font-weight: 400;
+  display: inline-table;
+  padding: 24px;
+  border-radius: 20px 20px 40px 0;
+  background: var(--keyboard-mode);
+  min-width: 882px;
+  opacity: 1;
+  pointer-events: auto;
+}
+.keyboard.inactive {
+  opacity: .8;
+  pointer-events: none;
+}
+.keyboard button {
+  outline: none;
+  transition: all 100ms ease-out;
+  margin: 0px;
+  padding: 0px;
+  border: none;
+  color: rgba(26, 83, 92, 0.5);
+  border-radius: 20px 20px 40px 40px;
+  cursor: none;
+  font-family: 'Pragati Narrow', sans-serif;
+  user-select: none;
+}
+.keyboard button.white {
+  background: #F7FFF7;
+  width: 40px;
+  height: 140px;
+  box-shadow: inset #E6F1E6 0 -10px 0 0;
+  padding-top: 80px;
+  margin: 1px;
+}
+.keyboard button.white:hover {
+  background: #fbf3b2;
+  box-shadow: inset #f3ecaa 0 -10px 0 0;
+}
+.keyboard button.white:active{
+  box-shadow: inset #f3ecaa 0 -2px 0 0;
+  transform: translate(0, 4px);
+  height: 132px;
+}
+
+ .keyboard button.white.play {
+    background: #fbf3b2;
+  box-shadow: inset #f3ecaa 0 -2px 0 0;
+  transform: translate(0, 4px);
+  height: 132px;
+}
+.keyboard button.black {
+  background: #1A535C;
+  width: 32px;
+  height: 90px;
+  z-index: 99;
+  position: absolute;
+  transform: translate(-16px, -10px);
+  box-shadow: inset #073B4C 0 -10px 0 0, var(--keyboard-mode) 0 0 0 2px;
+}
+.keyboard button.black:hover {
+  background: #8d9d65;
+  box-shadow: inset #83915d 0 -10px 0 0, var(--keyboard-mode) 0 0 0 2px;
+}
+.keyboard button.black:active{
+  transform: translate(-16px, -2px);
+  height: 82px;
+  box-shadow: inset #073B4C 0 -2px 0 0, var(--keyboard-mode) 0 0 0 2px;
+}
+
+.keyboard button.black.play {
+    background: #8d9d65;
+  transform: translate(-16px, -2px);
+  height: 82px;
+  box-shadow: inset #073B4C 0 -2px 0 0, var(--keyboard-mode) 0 0 0 2px;
+}
+
+#notes {
+  position: absolute;
+  bottom: 210px;
+}
+#notes span {
+  border-radius: 100px;
+  position: absolute;
+  z-index: -1;
+  transform-origin: center bottom;
+  pointer-events: none;
+}
+#notes span.user {
+  background: var(--note-user);
+  height: 40px;
+}
+#notes span.givennote {
+  z-index: 199;
+  background: rgba(255, 255, 255, 0);
+}
+#notes span.givennote.white {
+  top: 98px;
+  padding: 3px;
+}
+#notes span.givennote.black {
+  top: 48px;
+}
+#notes span.system {
+  background: var(--note-system);
+  height: 40px;
+}
+#notes span svg {
+  width: 100%;
+}
+
+#paw {
+  transform: scale(1.2);
+  z-index: 999;
+  position: absolute;
+  bottom: -120px;
+  left: 500px;
+  transform: translate(-50%, 0);
+  pointer-events: none;
+  transition: bottom 100ms ease, left 50ms ease, transform 100ms ease-out;
+}
+#paw svg {
+  display: none;
+}
+#paw.up {
+  transform: translate(-50%, 0);
+}
+#paw.up #open {
+  display: block;
+}
+#paw.down {
+  transform: translate(-50%, 8px);
+}
+#paw.down #close {
+  display: block;
+}
+
+.metainfo {
+  display: absolute;
+  text-align: center;
+  padding: 80px;
+  width: 100%;
+  background-image: linear-gradient(180deg, #4ECDC4 0%, rgba(78, 205, 196, 0) 100%);
+}
+
+.toggle {
+  padding: 4px 24px 8px 24px;
+  font-size: 24px;
+  border: none;
+  border-radius: 0 0 20px 20px;
+  font-weight: 700;
+  outline: none;
+  z-index: -1;
+  font-family: 'Pragati Narrow', sans-serif;
+}
+.toggle.active, .toggle:active {
+  transform: translate(0, 10px);
+}
+.toggle[data-mode="free"] {
+  background: var(--note-user);
+  color: #1A535C;
+  transition: all 100ms ease;
+  box-shadow: #F8BB2F 0 10px 0 0;
+}
+.toggle[data-mode="free"]:hover {
+  background: #FFE66D;
+}
+.toggle[data-mode="free"].active, .toggle[data-mode="free"]:active {
+  box-shadow: var(--note-user) 0 -10px 0 0;
+}
+.toggle[data-mode="free"].active:hover, .toggle[data-mode="free"]:active:hover {
+  background: var(--note-user);
+}
+.toggle[data-mode="auto"] {
+  background: var(--note-system);
+  color: #F7FFF7;
+  box-shadow: #D05E5E 0 10px 0 0;
+}
+.toggle[data-mode="auto"]:hover {
+  background: #FF8289;
+}
+.toggle[data-mode="auto"].active, .toggle[data-mode="auto"]:active {
+  box-shadow: var(--note-system) 0 -10px 0 0;
+}
+.toggle[data-mode="auto"].active:hover, .toggle[data-mode="auto"]:active:hover {
+  background: var(--note-system);
+}
+
+.onboarding .prompt {
+  display: flex;
+  text-align: center;
+  margin-top: 40px;
+  opacity: 1;
+  transform: scale(1);
+  transition: all 300 ease-out;
+}
+.onboarding .keyandnote {
+  bottom: 25%;
+  transition: bottom 350ms ease;
+}
+.onboarding .keyandnote .keyboard {
+  border-radius: 20px 20px 40px 40px;
+}
+.onboarding .keyandnote .givennote.white {
+  top: 134px !important;
+}
+.onboarding .keyandnote .givennote.black {
+  top: 78px !important;
+}
+.onboarding .toggle {
+  display: none;
+}
+.onboarding .metainfo {
+  display: none;
+}
+
+.processing .CTA {
+  display: block;
+  position: absolute;
+  bottom: 10%;
+  background: var(--note-system);
+  border: none;
+  border-radius: 100px;
+  padding: 24px 40px;
+  font-size: 32px;
+  font-weight: 700;
+  color: #F7FFF7;
+  box-shadow: #D05E5E 0 12px 0 0;
+  outline: none;
+  font-family: 'Pragati Narrow', sans-serif;
+  opacity: 1;
+  transform: scale(1);
+  transition: all 150ms ease-out;
+  z-index: 1000;
+}
+.processing .CTA:hover {
+  background: #FF8289;
+}
+.processing .CTA:active {
+  transform: translate(0, 10px);
+  box-shadow: #D05E5E 0 2px 0 0;
+}
+.processing .keyboard {
+  opacity: .8;
+  pointer-events: none;
+}
+
+.keyboard.shake {
+    animation: shaking 1s;
+}
+
+@keyframes shaking {
+  0%   {transform: translate(0, 0);}
+  12%   {transform: translate(-4%, 0);}
+  22%   {transform: translate(6%, 0);}
+  32%   {transform: translate(-2%, 0);}
+  45%,100% {transform: translate(0, 0);}
+}
