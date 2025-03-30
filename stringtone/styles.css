@@ -1,0 +1,200 @@
+body {
+    margin: 0;
+    overflow: hidden;
+    background-color: #3c038c;
+    height: 100vh;
+    width: 100vw;
+    touch-action: manipulation;
+    /* Prevent double-tap zoom on mobile */
+}
+
+#container {
+    position: relative;
+    width: 100%;
+    height: 100%;
+}
+
+.audio-notice {
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    background-color: rgba(0, 0, 0, 0.7);
+    color: white;
+    padding: 10px 20px;
+    border-radius: 20px;
+    font-family: Arial, sans-serif;
+    z-index: 100;
+    cursor: pointer;
+    transition: opacity 0.5s ease;
+    text-align: center;
+    max-width: 90%;
+    font-size: 16px;
+}
+
+/* Auto-play toggle button styling */
+.auto-play-toggle {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    background-color: rgba(0, 0, 0, 0.7);
+    color: white;
+    padding: 10px 15px;
+    border-radius: 20px;
+    font-family: Arial, sans-serif;
+    z-index: 100;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.auto-play-toggle:hover {
+    background-color: rgba(0, 0, 0, 0.9);
+}
+
+.toggle-switch {
+    position: relative;
+    display: inline-block;
+    width: 40px;
+    height: 24px;
+}
+
+.toggle-switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.toggle-slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #ccc;
+    transition: .4s;
+    border-radius: 34px;
+}
+
+.toggle-slider:before {
+    position: absolute;
+    content: "";
+    height: 16px;
+    width: 16px;
+    left: 4px;
+    bottom: 4px;
+    background-color: white;
+    transition: .4s;
+    border-radius: 50%;
+}
+
+input:checked+.toggle-slider {
+    background-color: #8338ec;
+}
+
+input:checked+.toggle-slider:before {
+    transform: translateX(16px);
+}
+
+.line {
+    position: absolute;
+    height: 1rem;
+    background-color: black;
+    transform-origin: 50% 50%;
+    pointer-events: auto;
+    /* Enable mouse events */
+    transition: transform 0.05s ease-out;
+    /* Smooth initial response */
+    padding: .2rem;
+    border-radius: 1rem;
+    box-sizing: border-box;
+}
+
+/* Make lines easier to touch on mobile */
+@media (max-width: 768px) {
+    .line {
+        padding: .3rem;
+        /* Slightly thicker lines for mobile */
+        height: 1.2rem;
+        /* Taller lines for better touch targets */
+    }
+
+    .line.thickened {
+        padding: 0.6rem;
+        /* Thicker padding for mobile when activated */
+    }
+}
+
+/* Add a class for the thickness animation */
+.line.thickened {
+    transition: padding .2s ease-out;
+    padding: 1.5rem;
+    box-shadow: 0 0 15px rgba(255, 255, 255, 0.5);
+}
+
+/* Add a class for the gradual thickness reduction */
+.line.thinning {
+    transition: padding 1s ease-out;
+    padding: .2rem;
+}
+
+/* Add continuous rotation animation */
+@keyframes rotate {
+    from {
+        transform: rotate(var(--rotation));
+    }
+
+    to {
+        transform: rotate(calc(var(--rotation) + 360deg));
+    }
+}
+
+/* Add natural pendulum motion that transitions back to regular rotation */
+@keyframes pendulum-swing {
+    0% {
+        transform: rotate(var(--rotation));
+    }
+
+    40% {
+        transform: rotate(calc(var(--rotation) - 40deg));
+    }
+
+    100% {
+        transform: rotate(var(--rotation));
+    }
+}
+
+/* Animation for the plucked string effect */
+@keyframes pluck {
+    0% {
+        transform: translateY(0) rotate(var(--rotation));
+    }
+
+    20% {
+        transform: translateY(var(--pluck-height)) rotate(var(--rotation));
+    }
+
+    40% {
+        transform: translateY(calc(var(--pluck-height) * -0.8)) rotate(var(--rotation));
+    }
+
+    60% {
+        transform: translateY(calc(var(--pluck-height) * 0.6)) rotate(var(--rotation));
+    }
+
+    80% {
+        transform: translateY(calc(var(--pluck-height) * -0.4)) rotate(var(--rotation));
+    }
+
+    100% {
+        transform: translateY(0) rotate(var(--rotation));
+    }
+}
+
+.line.plucked {
+    animation: pluck 0.6s cubic-bezier(0.215, 0.610, 0.355, 1.000);
+    z-index: 10;
+}
