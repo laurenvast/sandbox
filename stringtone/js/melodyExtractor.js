@@ -15,6 +15,17 @@ const melodyExtractor = {
         "Hallelujah - Leonard Cohen"
     ],
 
+    // Pre-defined melodies for suggested songs
+    predefinedMelodies: {
+        "Twinkle Twinkle Little Star": ["C4", "C4", "G4", "G4", "A4", "A4", "G4", "F4", "F4", "E4", "E4", "D4", "D4", "C4", "G4", "G4", "F4", "F4", "E4", "E4", "D4", "G4", "G4", "F4", "F4", "E4", "E4", "D4", "C4", "C4", "G4", "G4", "A4", "A4", "G4"],
+        "Fur Elise": ["E5", "D#5", "E5", "D#5", "E5", "B4", "D5", "C5", "A4", "C4", "E4", "A4", "B4", "E4", "G#4", "B4", "C5", "E4", "E5", "D#5", "E5", "D#5", "E5", "B4", "D5", "C5", "A4"],
+        "Happy Birthday": ["C4", "C4", "D4", "C4", "F4", "E4", "C4", "C4", "D4", "C4", "G4", "F4", "C4", "C4", "C5", "A4", "F4", "E4", "D4", "A#4", "A#4", "A4", "F4", "G4", "F4"],
+        "Canon in D": ["F#4", "E4", "D4", "C#4", "B3", "A3", "B3", "C#4", "D4", "C#4", "B3", "A3", "G3", "F#3", "G3", "A3", "D4", "F#4", "A4", "G4", "F#4", "D4", "F#4", "E4", "D4", "B3", "D4", "A3"],
+        "Moonlight Sonata": ["C#4", "E4", "G#4", "C#5", "B3", "E4", "G#4", "B4", "A3", "E4", "G#4", "A4", "G#3", "E4", "G#4", "G#4", "F#3", "D#4", "F#4", "A4", "G#3", "E4", "G#4", "B4", "A3", "C#4", "E4", "A4", "B3", "D#4", "F#4", "B4"],
+        "Yesterday - The Beatles": ["F4", "E4", "D4", "C#4", "D4", "E4", "F4", "G4", "A4", "A4", "G4", "F4", "F4", "E4", "D4", "C#4", "C#4", "E4", "A3", "A3", "C4", "C4", "D4", "C4", "Bb3", "A3", "G3", "F3", "G3"],
+        "Hallelujah - Leonard Cohen": ["G4", "E4", "G4", "G4", "A4", "A4", "G4", "G4", "E4", "E4", "F#4", "F#4", "G4", "A4", "A4", "G4", "G4", "E4", "E4", "G4", "G4", "A4", "A4", "G4", "G4"]
+    },
+
     // Extract melody from a song name
     async extractMelody(songName) {
         if (this.isExtracting) return null;
@@ -22,6 +33,15 @@ const melodyExtractor = {
         this.currentSong = songName;
 
         try {
+            // Check if we have a predefined melody for this song
+            if (this.predefinedMelodies[songName]) {
+                console.log(`Using predefined melody for "${songName}"`);
+                this.extractedMelody = [...this.predefinedMelodies[songName]];
+                return this.extractedMelody;
+            }
+
+            // If not a predefined song, use the API
+            console.log(`Fetching melody for "${songName}" from API`);
             const response = await fetch(this.serverUrl, {
                 method: 'POST',
                 headers: {

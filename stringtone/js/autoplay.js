@@ -77,33 +77,19 @@ function setSongMelody(melodyNotes) {
     }
 
     // Set the new melody notes
-    autoPlay.songMelodyNotes = melodyNotes;
+    autoPlay.songMelodyNotes = [...melodyNotes];
 
-    // Map melody notes to note indices
+    // Instead of mapping to indices, store the actual notes
     autoPlay.noteGroups = [];
     autoPlay.patternLength = melodyNotes.length;
 
+    // Store each note directly with its original value
     melodyNotes.forEach(note => {
-        // Find index of this note in our scale
-        const noteIndex = musicBoxScale.indexOf(note);
-
-        // If note exists in our scale, use it
-        // Otherwise, find closest note
-        if (noteIndex !== -1) {
-            autoPlay.noteGroups.push([noteIndex]);
-        } else {
-            // Find note without octave
-            const noteName = note.replace(/\d+$/, '');
-            // Find closest matching note in our scale
-            const closeMatch = musicBoxScale.findIndex(n => n.startsWith(noteName));
-
-            if (closeMatch !== -1) {
-                autoPlay.noteGroups.push([closeMatch]);
-            } else {
-                // If no close match, just use a random note
-                autoPlay.noteGroups.push([Math.floor(Math.random() * musicBoxScale.length)]);
-            }
-        }
+        // Each note is now an object with the actual note value
+        autoPlay.noteGroups.push({
+            noteValue: note,
+            isOriginal: true
+        });
     });
 
     // Set flag to indicate we're using a song melody
@@ -114,7 +100,7 @@ function setSongMelody(melodyNotes) {
     autoPlay.patternIndex = 0;
 
     // Adjust tempo based on melody length (longer melodies play a bit faster)
-    autoPlay.tempo = Math.min(160, Math.max(80, 100 + melodyNotes.length));
+    autoPlay.tempo = Math.min(160, Math.max(80, 100 + melodyNotes.length / 2));
 
     // Start auto-play with the new melody
     if (autoPlay.enabled) {
@@ -155,6 +141,10 @@ function generateMusicalPattern() {
 
     // Select a pattern length (8, 12, or 16 notes)
     autoPlay.patternLength = [8, 12, 16][Math.floor(Math.random() * 3)];
+
+    // Note: For algorithmic patterns we still use arrays of indices
+    // This is different from song melodies which use objects with noteValue properties
+    // These arrays of indices will be handled by the updated playAutomatedLines function
 
     // Create different note patterns based on the melody type
     switch (autoPlay.melodyType) {
@@ -307,41 +297,58 @@ function scheduleNextNote() {
     // 60000 ms / tempo = ms per quarter note
     const quarterNoteTime = 60000 / autoPlay.tempo;
 
-    // Calculate variations for different note lengths
-    // Possibilities: eighth note, quarter note, dotted quarter
-    const noteDurations = [
-        quarterNoteTime / 2,      // Eighth note (0.5x quarter note)
-        quarterNoteTime,         // Quarter note (1x)
-        quarterNoteTime * 1.5    // Dotted quarter note (1.5x)
-    ];
+    let noteTime;
 
-    // Generate a weighted selection favoring quarter notes
-    // 20% eighth notes, 60% quarter notes, 20% dotted quarter notes
-    let durationIndex;
-    const rand = Math.random();
-    if (rand < 0.2) {
-        durationIndex = 0; // Eighth
-    } else if (rand < 0.8) {
-        durationIndex = 1; // Quarter
+    if (autoPlay.usingSongMelody) {
+        // For song melodies, use more consistent timing
+        // Most song melodies work well with quarter notes
+        noteTime = quarterNoteTime;
+
+        // Only add very slight human feel (±2%) for song melodies
+        const minimalHumanFeel = 1 + (Math.random() * 0.04 - 0.02);
+        noteTime *= minimalHumanFeel;
     } else {
-        durationIndex = 2; // Dotted quarter
+        // For algorithmic melodies, use more varied timing
+        // Calculate variations for different note lengths
+        const noteDurations = [
+            quarterNoteTime / 2,      // Eighth note (0.5x quarter note)
+            quarterNoteTime,         // Quarter note (1x)
+            quarterNoteTime * 1.5    // Dotted quarter note (1.5x)
+        ];
+
+        // Generate a weighted selection favoring quarter notes
+        // 20% eighth notes, 60% quarter notes, 20% dotted quarter notes
+        let durationIndex;
+        const rand = Math.random();
+        if (rand < 0.2) {
+            durationIndex = 0; // Eighth
+        } else if (rand < 0.8) {
+            durationIndex = 1; // Quarter
+        } else {
+            durationIndex = 2; // Dotted quarter
+        }
+
+        // Get the note timing
+        noteTime = noteDurations[durationIndex];
+
+        // Add a slight human feel with +/- 5% timing variations
+        const humanFeel = 1 + (Math.random() * 0.1 - 0.05);
+        noteTime *= humanFeel;
     }
-
-    // Get the note timing
-    let noteTime = noteDurations[durationIndex];
-
-    // Add a slight human feel with +/- 5% timing variations
-    const humanFeel = 1 + (Math.random() * 0.1 - 0.05);
-    noteTime *= humanFeel;
 
     // Before playing, check if we should play now or add a rest
     if (autoPlay.patternIndex < autoPlay.noteGroups.length) {
-        const noteIdxGroup = autoPlay.noteGroups[autoPlay.patternIndex];
+        const noteItem = autoPlay.noteGroups[autoPlay.patternIndex];
 
-        // If the group isn't empty (i.e., not a rest), play the notes
-        if (noteIdxGroup && noteIdxGroup.length > 0) {
-            // Play the line(s) corresponding to these notes
-            playAutomatedLines(noteIdxGroup);
+        // Check if we have a note to play
+        if (noteItem) {
+            if (autoPlay.usingSongMelody) {
+                // For song melodies, we have note objects
+                playNoteDirectly(noteItem);
+            } else {
+                // For other melody types, we still have arrays of indices
+                playAutomatedLines(noteItem);
+            }
         }
 
         // Move to next note in pattern
@@ -352,9 +359,60 @@ function scheduleNextNote() {
     autoPlay.timerId = setTimeout(scheduleNextNote, noteTime);
 }
 
+// Play a note directly without relying on lines
+function playNoteDirectly(noteItem) {
+    if (!autoPlay.enabled) return;
+
+    const noteValue = noteItem.noteValue;
+
+    // Try to find a matching line for visual feedback
+    let matchingLine = null;
+
+    parallax.lines.forEach(line => {
+        if (!matchingLine && !animatingLines.has(line.dataset.id)) {
+            const lineNote = line.dataset.note;
+
+            // Try for an exact match first
+            if (lineNote === noteValue) {
+                matchingLine = line;
+            }
+        }
+    });
+
+    // If we couldn't find an exact match but still need visual feedback,
+    // just pick a random available line
+    if (!matchingLine) {
+        const availableLines = [...parallax.lines].filter(
+            line => !animatingLines.has(line.dataset.id)
+        );
+
+        if (availableLines.length > 0) {
+            matchingLine = availableLines[Math.floor(Math.random() * availableLines.length)];
+        }
+    }
+
+    // Play the sound directly
+    synth.triggerAttackRelease(noteValue, 0.5);
+
+    // Animate a line for visual feedback if one is available
+    if (matchingLine) {
+        simulateLineInteraction(matchingLine);
+    }
+}
+
 // Play one or more lines automatically
 function playAutomatedLines(noteIndices) {
-    if (!autoPlay.enabled || noteIndices.length === 0) return;
+    // Handle both formats: array of indices (old) or note object (new)
+    if (!autoPlay.enabled) return;
+
+    // If we have a note object (from song melody), use playNoteDirectly instead
+    if (noteIndices && typeof noteIndices === 'object' && noteIndices.noteValue) {
+        playNoteDirectly(noteIndices);
+        return;
+    }
+
+    // Old format handling (for algorithmic patterns)
+    if (!Array.isArray(noteIndices) || noteIndices.length === 0) return;
 
     // Find lines that match these notes
     const availableLines = [];
@@ -368,11 +426,14 @@ function playAutomatedLines(noteIndices) {
         const noteIndex = musicBoxScale.indexOf(lineNote);
 
         if (noteIndices.includes(noteIndex)) {
-            availableLines.push(line);
+            availableLines.push({
+                line: line,
+                noteIndex: noteIndex
+            });
         }
     });
 
-    // Shuffle available lines
+    // For non-song melodies, shuffle 
     shuffleArray(availableLines);
 
     // Select lines to play based on dynamic level
@@ -389,8 +450,8 @@ function playAutomatedLines(noteIndices) {
     // Play the selected lines
     for (let i = 0; i < linesToPlay; i++) {
         if (i < availableLines.length) {
-            const line = availableLines[i];
-            simulateLineInteraction(line);
+            const lineObj = availableLines[i];
+            simulateLineInteraction(lineObj.line);
         }
     }
 } 

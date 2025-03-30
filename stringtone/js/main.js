@@ -43,6 +43,7 @@ document.addEventListener('DOMContentLoaded', () => {
     melodyExtractor.suggestedSongs.forEach(song => {
         const li = document.createElement('li');
         li.textContent = song;
+
         li.addEventListener('click', () => {
             songNameInput.value = song;
             extractMelodyFromSong(song);
@@ -72,12 +73,15 @@ document.addEventListener('DOMContentLoaded', () => {
     async function extractMelodyFromSong(songName) {
         // Update UI to show extraction is in progress
         extractButton.disabled = true;
-        extractionStatus.textContent = `Extracting melody from "${songName}"...`;
+
+        // Show loading message
+        extractionStatus.textContent = `Loading melody for "${songName}"...`;
+
         songInputContainer.classList.remove('pulsing');
         autoPlayToggle.classList.remove('song-active');
 
         try {
-            // Extract melody using OpenAI
+            // Extract melody using our melodyExtractor (which checks for predefined melodies first)
             const melodyNotes = await melodyExtractor.extractMelody(songName);
 
             if (melodyNotes && melodyNotes.length > 0) {
@@ -86,10 +90,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 // Update UI to show success
                 extractionStatus.textContent = `Now playing: "${songName}" (${melodyNotes.length} notes)`;
+
                 songInputContainer.classList.add('pulsing');
                 autoPlayToggle.classList.add('song-active');
 
-                console.log(`Extracted melody: ${JSON.stringify(melodyNotes)}`);
+                console.log(`Melody notes for "${songName}": ${JSON.stringify(melodyNotes)}`);
             } else {
                 // Handle extraction failure
                 extractionStatus.textContent = `Could not extract melody from "${songName}". Please try another song.`;
