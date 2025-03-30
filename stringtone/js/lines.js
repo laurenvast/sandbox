@@ -36,7 +36,29 @@ function updateLinesWithSongNotes(songNotes) {
     lines.forEach((line, index) => {
         // Use modulo to cycle through the song notes
         const noteIndex = index % songNotes.length;
-        line.dataset.note = songNotes[noteIndex];
+        const note = songNotes[noteIndex];
+
+        // Handle different note formats
+        if (typeof note === 'string') {
+            // Simple string format
+            line.dataset.note = note;
+            line.dataset.duration = "1"; // Default duration
+        } else if (note && typeof note === 'object') {
+            // Check for new format (n, d) first
+            if (note.n !== undefined) {
+                line.dataset.note = note.n;
+                if (note.d !== undefined) {
+                    line.dataset.duration = note.d;
+                }
+            }
+            // Check for old format (noteValue, duration)
+            else if (note.noteValue !== undefined) {
+                line.dataset.note = note.noteValue;
+                if (note.duration !== undefined) {
+                    line.dataset.duration = note.duration;
+                }
+            }
+        }
     });
 
     console.log(`Updated ${lines.length} lines with notes from song (${songNotes.length} unique notes)`);
@@ -146,11 +168,35 @@ function drawLines() {
             if (activeSongNotes.length > 0) {
                 // Use notes from the active song, cycling through them
                 const songNoteIndex = i % activeSongNotes.length;
-                line.dataset.note = activeSongNotes[songNoteIndex];
+                const note = activeSongNotes[songNoteIndex];
+
+                // Handle different note formats
+                if (typeof note === 'string') {
+                    // Simple string format
+                    line.dataset.note = note;
+                    line.dataset.duration = "1"; // Default duration
+                } else if (note && typeof note === 'object') {
+                    // Check for new format (n, d) first
+                    if (note.n !== undefined) {
+                        line.dataset.note = note.n;
+                        if (note.d !== undefined) {
+                            line.dataset.duration = note.d;
+                        }
+                    }
+                    // Check for old format (noteValue, duration)
+                    else if (note.noteValue !== undefined) {
+                        line.dataset.note = note.noteValue;
+                        if (note.duration !== undefined) {
+                            line.dataset.duration = note.duration;
+                        }
+                    }
+                }
             } else {
                 // Use random note from music box scale
                 const randomNoteIndex = Math.floor(Math.random() * musicBoxScale.length);
                 line.dataset.note = musicBoxScale[randomNoteIndex];
+                // Default duration for random notes is 1 (quarter note)
+                line.dataset.duration = "1";
             }
 
             // Store original angle for animation
@@ -248,7 +294,14 @@ function handleInteraction(event) {
 
     if (lineElement && !animatingLines.has(lineElement.dataset.id)) {
         // Use the shared simulation function that auto-play also uses
-        simulateLineInteraction(lineElement);
+        // If there's a duration stored in the dataset, extract it and pass it
+        let noteDuration;
+        if (lineElement.dataset.duration) {
+            // Convert duration multiplier to actual seconds (with some adjustments for musicality)
+            // Limit to range of 0.1 to 2.0 seconds
+            noteDuration = Math.min(2.0, Math.max(0.1, parseFloat(lineElement.dataset.duration) * 0.5));
+        }
+        simulateLineInteraction(lineElement, noteDuration);
     }
 }
 

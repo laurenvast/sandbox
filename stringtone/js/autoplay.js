@@ -120,11 +120,34 @@ function setSongMelody(melodyNotes, songName) {
         autoPlay.songMelodyNotes = [...melodyNotes];
         autoPlay.patternLength = melodyNotes.length;
 
-        // Store each note directly with its original value
-        autoPlay.noteGroups = melodyNotes.map(note => ({
-            noteValue: note,
-            isOriginal: true
-        }));
+        // Store each note with its value and duration
+        // Support both formats: old (noteValue, duration) and new (n, d)
+        autoPlay.noteGroups = melodyNotes.map(note => {
+            if (typeof note === 'object') {
+                if (note.n !== undefined) {
+                    // New format with n and d
+                    return {
+                        noteValue: note.n,
+                        duration: note.d || 1, // Use existing duration or default to 1
+                        isOriginal: true
+                    };
+                } else if (note.noteValue !== undefined) {
+                    // Old format with noteValue and duration
+                    return {
+                        noteValue: note.noteValue,
+                        duration: note.duration || 1, // Use existing duration or default to 1
+                        isOriginal: true
+                    };
+                }
+            }
+
+            // String format or fallback
+            return {
+                noteValue: typeof note === 'string' ? note : String(note),
+                duration: 1, // Default duration: 1 = quarter note
+                isOriginal: true
+            };
+        });
 
         // Set flag to indicate we're using a song melody
         autoPlay.usingSongMelody = true;
@@ -369,10 +392,18 @@ function scheduleNextNote() {
 
     let noteTime;
 
-    if (autoPlay.usingSongMelody) {
-        // For song melodies, use more consistent timing
-        // Most song melodies work well with quarter notes
-        noteTime = quarterNoteTime;
+    if (autoPlay.usingSongMelody && autoPlay.patternIndex < autoPlay.noteGroups.length) {
+        // Get the current note item
+        const noteItem = autoPlay.noteGroups[autoPlay.patternIndex];
+
+        // Calculate note time based on duration if available
+        // duration is relative to quarter note (1 = quarter note, 0.5 = eighth note, 2 = half note, etc.)
+        if (noteItem && typeof noteItem === 'object' && noteItem.duration) {
+            noteTime = quarterNoteTime * noteItem.duration;
+        } else {
+            // Default to quarter note if no duration specified
+            noteTime = quarterNoteTime;
+        }
 
         // Only add very slight human feel (±2%) for song melodies
         const minimalHumanFeel = 1 + (Math.random() * 0.04 - 0.02);
@@ -434,6 +465,17 @@ function playNoteDirectly(noteItem) {
     if (!autoPlay.enabled) return;
 
     const noteValue = noteItem.noteValue;
+
+    // Determine note duration for audio playback
+    // Default to 0.5 seconds if no duration specified
+    let noteDuration = 0.5;
+
+    // If noteItem has duration property, scale it accordingly (keeping reasonable bounds)
+    if (noteItem.duration) {
+        // Convert duration multiplier to actual seconds (with some adjustments for musicality)
+        // Limit to range of 0.1 to 2.0 seconds
+        noteDuration = Math.min(2.0, Math.max(0.1, noteItem.duration * 0.5));
+    }
 
     // Try to find a matching line for visual feedback
     let matchingLine = null;
@@ -505,12 +547,12 @@ function playNoteDirectly(noteItem) {
         }
     }
 
-    // Play the sound directly
-    synth.triggerAttackRelease(noteValue, 0.5);
+    // Play the sound directly with the calculated duration
+    synth.triggerAttackRelease(noteValue, noteDuration);
 
     // Animate a line for visual feedback if one is available
     if (matchingLine) {
-        simulateLineInteraction(matchingLine);
+        simulateLineInteraction(matchingLine, noteDuration);
     }
 }
 

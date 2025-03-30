@@ -121,12 +121,26 @@ window.stopAllAudio = function () {
 }
 
 // Simulate interaction with a specific line
-function simulateLineInteraction(lineElement) {
+function simulateLineInteraction(lineElement, duration) {
     if (!lineElement || animatingLines.has(lineElement.dataset.id)) return;
 
     // Play the assigned note with music box characteristics
     const note = lineElement.dataset.note;
-    synth.triggerAttackRelease(note, 0.5);
+
+    // Get duration for the note
+    // If duration was passed as a parameter, use that
+    // Otherwise try to get from the dataset, or fall back to default 0.5s
+    let noteDuration = 0.5; // Default duration
+
+    if (duration !== undefined) {
+        noteDuration = duration;
+    } else if (lineElement.dataset.duration) {
+        // Convert duration multiplier to actual seconds (with some adjustments for musicality)
+        // Limit to range of 0.1 to 2.0 seconds
+        noteDuration = Math.min(2.0, Math.max(0.1, parseFloat(lineElement.dataset.duration) * 0.5));
+    }
+
+    synth.triggerAttackRelease(note, noteDuration);
 
     // Visual effect - identical to user interaction code
     lineElement.classList.add('thickened');
