@@ -1,0 +1,627 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive Lines - String Effect</title>
+    <!-- Add Tone.js library -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.min.js"></script>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            background-color: #3c038c;
+            height: 100vh;
+            width: 100vw;
+            touch-action: manipulation;
+            /* Prevent double-tap zoom on mobile */
+        }
+
+        #container {
+            position: relative;
+            width: 100%;
+            height: 100%;
+        }
+
+        .audio-notice {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: rgba(0, 0, 0, 0.7);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 20px;
+            font-family: Arial, sans-serif;
+            z-index: 100;
+            cursor: pointer;
+            transition: opacity 0.5s ease;
+            text-align: center;
+            max-width: 90%;
+            font-size: 16px;
+        }
+
+        .line {
+            position: absolute;
+            height: 1rem;
+            background-color: black;
+            transform-origin: 50% 50%;
+            pointer-events: auto;
+            /* Enable mouse events */
+            transition: transform 0.05s ease-out;
+            /* Smooth initial response */
+            padding: .2rem;
+            border-radius: 1rem;
+            box-sizing: border-box;
+        }
+
+        /* Make lines easier to touch on mobile */
+        @media (max-width: 768px) {
+            .line {
+                padding: .3rem;
+                /* Slightly thicker lines for mobile */
+                height: 1.2rem;
+                /* Taller lines for better touch targets */
+            }
+
+            .line.thickened {
+                padding: 0.6rem;
+                /* Thicker padding for mobile when activated */
+            }
+        }
+
+        /* Add a class for the thickness animation */
+        .line.thickened {
+            transition: padding .2s ease-out;
+            padding: 1.5rem;
+            box-shadow: 0 0 15px rgba(255, 255, 255, 0.5);
+        }
+
+        /* Add a class for the gradual thickness reduction */
+        .line.thinning {
+            transition: padding 1s ease-out;
+            padding: .2rem;
+        }
+
+        /* Add continuous rotation animation */
+        @keyframes rotate {
+            from {
+                transform: rotate(var(--rotation));
+            }
+
+            to {
+                transform: rotate(calc(var(--rotation) + 360deg));
+            }
+        }
+
+        /* Add natural pendulum motion that transitions back to regular rotation */
+        @keyframes pendulum-swing {
+            0% {
+                transform: rotate(var(--rotation));
+            }
+
+            40% {
+                transform: rotate(calc(var(--rotation) - 40deg));
+            }
+
+            100% {
+                transform: rotate(var(--rotation));
+            }
+        }
+
+        /* Animation for the plucked string effect */
+        @keyframes pluck {
+            0% {
+                transform: translateY(0) rotate(var(--rotation));
+            }
+
+            20% {
+                transform: translateY(var(--pluck-height)) rotate(var(--rotation));
+            }
+
+            40% {
+                transform: translateY(calc(var(--pluck-height) * -0.8)) rotate(var(--rotation));
+            }
+
+            60% {
+                transform: translateY(calc(var(--pluck-height) * 0.6)) rotate(var(--rotation));
+            }
+
+            80% {
+                transform: translateY(calc(var(--pluck-height) * -0.4)) rotate(var(--rotation));
+            }
+
+            100% {
+                transform: translateY(0) rotate(var(--rotation));
+            }
+        }
+
+        .line.plucked {
+            animation: pluck 0.6s cubic-bezier(0.215, 0.610, 0.355, 1.000);
+            z-index: 10;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="container"></div>
+    <div class="audio-notice" id="audioNotice">Click anywhere to enable sound</div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const container = document.getElementById('container');
+            const audioNotice = document.getElementById('audioNotice');
+            // Reduce total number for better performance with interactivity
+            const numLines = 200;
+            const lineLength = 150; // 100px lines
+            const batchSize = 200; // Number of lines per batch
+
+            // Track active animations to prevent multiple on same element
+            const animatingLines = new Set();
+
+            // Store the parallax data
+            const parallax = {
+                enabled: true,
+                mouseX: 0,
+                mouseY: 0,
+                windowWidth: window.innerWidth,
+                windowHeight: window.innerHeight,
+                intensity: 30, // Increased from 15 to 30 for more pronounced effect
+                lines: []
+            };
+
+            // Initialize Tone.js with windchime-like sounds
+            // Create a metallic sound with shimmer and sustain
+            const reverb = new Tone.Reverb({
+                decay: 2,
+                wet: 0.3
+            }).toDestination();
+
+            // Create a music box-like synth
+            const synth = new Tone.PolySynth(Tone.Synth, {
+                oscillator: {
+                    type: "sine"
+                },
+                envelope: {
+                    attack: 0.001,
+                    decay: 0.1,
+                    sustain: 0.05,
+                    release: 1.2,
+                },
+                volume: -8
+            }).connect(reverb);
+
+            // Define a scale for music box sounds - typically higher register
+            const musicBoxScale = ["D#5", "F5", "F#5", "G#5", "A#5", "C6", "C#6", "D#6", "F6", "F#6"];
+
+            // Check if device is mobile
+            const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+
+            // Adjust number of lines for mobile devices
+            if (isMobile) {
+                numLines = 80; // Fewer lines for better mobile performance
+            }
+
+            // Start Tone.js audio context on first user interaction
+            document.addEventListener('click', startAudio, { once: true });
+            document.addEventListener('touchstart', startAudio, { once: true });
+
+            function startAudio() {
+                if (Tone.context.state !== 'running') {
+                    Tone.start().then(() => {
+                        console.log('Audio context started');
+                        audioNotice.style.opacity = '0';
+                        setTimeout(() => {
+                            audioNotice.style.display = 'none';
+                        }, 500);
+
+                        // Play a subtle music box sound to confirm audio is working
+                        setTimeout(() => {
+                            // Play a quick ascending 3-note pattern typical of music boxes
+                            synth.triggerAttackRelease('C6', 0.1);
+                            setTimeout(() => synth.triggerAttackRelease('E6', 0.1), 150);
+                            setTimeout(() => synth.triggerAttackRelease('G6', 0.1), 300);
+                        }, 300);
+                    });
+                }
+            }
+
+            // Draw lines function
+            function drawLines() {
+                // Clear previous lines
+                container.innerHTML = '';
+
+                const width = window.innerWidth;
+                const height = window.innerHeight;
+
+                // Extend grid area beyond viewport to ensure edges aren't empty
+                // Create a grid with padding on all sides
+                const gridPadding = 0.1; // Extend grid by 20% on each side
+                const extendedWidth = width * (1 + gridPadding * 2);
+                const extendedHeight = height * (1 + gridPadding * 2);
+
+                // Calculate offset to center the extended grid
+                const offsetX = -(width * gridPadding);
+                const offsetY = -(height * gridPadding);
+
+                // Calculate grid spacing for even distribution
+                const area = extendedWidth * extendedHeight;
+                const areaPerLine = area / numLines;
+                const gridSpacing = Math.sqrt(areaPerLine);
+
+                const cols = Math.ceil(extendedWidth / gridSpacing);
+                const rows = Math.ceil(extendedHeight / gridSpacing);
+
+                const totalPositions = cols * rows;
+                const positions = Array.from({ length: totalPositions }, (_, i) => i);
+
+                // Shuffle array to randomize positions while maintaining even distribution
+                shuffleArray(positions);
+
+                // Take the first numLines positions (or fewer if the window is small)
+                const selectedPositions = positions.slice(0, numLines);
+
+                // Create batches for better performance
+                const numBatches = Math.ceil(numLines / batchSize);
+
+                for (let b = 0; b < numBatches; b++) {
+                    const batchContainer = document.createElement('div');
+                    batchContainer.className = 'batch';
+                    const startIdx = b * batchSize;
+                    const endIdx = Math.min((b + 1) * batchSize, numLines);
+
+                    const fragment = document.createDocumentFragment();
+
+                    for (let i = startIdx; i < endIdx; i++) {
+                        const index = selectedPositions[i];
+                        if (index === undefined) continue;
+
+                        const row = Math.floor(index / cols);
+                        const col = index % cols;
+
+                        // Calculate position in the extended grid
+                        const gridX = col * gridSpacing + (Math.random() * gridSpacing * 0.5);
+                        const gridY = row * gridSpacing + (Math.random() * gridSpacing * 0.5);
+
+                        // Apply offset to position the grid correctly
+                        const x = gridX + offsetX;
+                        const y = gridY + offsetY;
+
+                        const angle = Math.random() * 360; // Random angle in degrees
+
+                        // Create line element
+                        const line = document.createElement('div');
+                        line.className = 'line';
+                        line.dataset.id = i; // Add ID for tracking
+
+                        // Assign a random note from the music box scale
+                        const randomNoteIndex = Math.floor(Math.random() * musicBoxScale.length);
+                        line.dataset.note = musicBoxScale[randomNoteIndex];
+
+                        // Store original angle for animation
+                        line.style.setProperty('--rotation', `${angle}deg`);
+
+                        // Calculate rotation speed based on vertical position
+                        // Lines at the top (y close to 0) rotate faster than lines at the bottom
+                        // Map y position (0 to height) to rotation duration (10s to 40s)
+                        const minDuration = 10; // Faster rotation at the top (10 seconds)
+                        const maxDuration = 40; // Slower rotation at the bottom (40 seconds)
+                        const normalizedY = y / height; // 0 at top, 1 at bottom
+                        const rotationDuration = minDuration + (normalizedY * (maxDuration - minDuration));
+
+                        line.style.animation = `rotate ${rotationDuration}s linear infinite`;
+
+                        // Calculate a pluck height based on line length (10-20% of length)
+                        const pluckHeight = 5 + Math.random() * 10;
+                        line.style.setProperty('--pluck-height', `${pluckHeight}px`);
+
+                        // Set position
+                        line.style.left = `${x}px`;
+                        line.style.top = `${y}px`;
+                        line.style.width = `${lineLength}px`;
+
+                        // Store original position for parallax effect
+                        line.dataset.originalX = x;
+                        line.dataset.originalY = y;
+
+                        // Assign a random depth factor for parallax (0.1 to 1.0)
+                        // Closer to 1 = more movement (seems closer to viewer)
+                        const depthFactor = 0.1 + Math.random() * 0.9;
+                        line.dataset.depth = depthFactor;
+
+                        // Apply depth-based styling
+                        // Deeper elements (higher depth factor) appear closer to the viewer
+                        // They should be larger, more opaque, and on top
+
+                        // Scale based on depth (deeper = larger)
+                        const scaleAmount = 0.7 + (depthFactor * 0.6); // Scale from 70% to 130%
+                        line.style.transform = `rotate(${angle}deg) scale(${scaleAmount})`;
+
+                        // Opacity based on depth (deeper = more opaque)
+                        const opacity = 0.3 + (depthFactor * 0.7); // Opacity from 30% to 100%
+                        line.style.opacity = opacity;
+
+                        // Z-index based on depth (deeper = higher z-index)
+                        const zIndex = Math.floor(depthFactor * 10);
+                        line.style.zIndex = zIndex;
+
+                        // Add to parallax tracked elements
+                        parallax.lines.push(line);
+
+                        // Set thickness (1px to 3px for better visibility)
+                        line.style.height = `1px`;
+
+                        // Set rotation
+                        line.style.transform = `rotate(${angle}deg)`;
+
+                        // Set color from the specified palette
+                        const colorPalette = ['#8338ec', '#ff0054', '#ff5400', '#f2c02c'];
+                        const randomColorIndex = Math.floor(Math.random() * colorPalette.length);
+                        line.style.backgroundColor = colorPalette[randomColorIndex];
+
+                        // Add to batch
+                        fragment.appendChild(line);
+                    }
+
+                    batchContainer.appendChild(fragment);
+                    container.appendChild(batchContainer);
+                }
+
+                // Set up event delegation for line interactions
+                setupEventListeners();
+            }
+
+            function setupEventListeners() {
+                // Function to handle interaction (both mouse and touch)
+                function handleInteraction(event) {
+                    // Get the touch or mouse position
+                    const clientX = event.clientX || (event.touches && event.touches[0] ? event.touches[0].clientX : null);
+                    const clientY = event.clientY || (event.touches && event.touches[0] ? event.touches[0].clientY : null);
+
+                    // If this is a touch event, prevent default to avoid scrolling issues
+                    if (event.type.startsWith('touch')) {
+                        event.preventDefault();
+                    }
+
+                    // Find the element at this position (for touch events)
+                    let lineElement;
+                    if (event.type.startsWith('touch')) {
+                        const elementsUnderTouch = document.elementsFromPoint(clientX, clientY);
+                        lineElement = elementsUnderTouch.find(el => el.classList.contains('line'));
+                    } else {
+                        lineElement = event.target.closest('.line');
+                    }
+
+                    if (lineElement && !animatingLines.has(lineElement.dataset.id)) {
+                        // Play the assigned note with music box characteristics
+                        const note = lineElement.dataset.note;
+                        synth.triggerAttackRelease(note, 0.5);
+
+                        // Rest of the interaction code remains the same
+                        // Increase thickness with a smooth animation
+                        lineElement.classList.add('thickened');
+
+                        // Get current position for later restoring rotation speed
+                        lineElement.dataset.y = lineElement.getBoundingClientRect().top;
+
+                        // Track this animation
+                        animatingLines.add(lineElement.dataset.id);
+
+                        // Get current computed rotation to ensure smooth transition
+                        const computedStyle = window.getComputedStyle(lineElement);
+                        const transformMatrix = new DOMMatrix(computedStyle.transform);
+                        const currentAngle = Math.atan2(transformMatrix.b, transformMatrix.a) * (180 / Math.PI);
+
+                        // Update rotation variable to current position for smooth transition
+                        lineElement.style.setProperty('--rotation', `${currentAngle}deg`);
+
+                        // Pause current rotation
+                        lineElement.style.animationPlayState = 'paused';
+
+                        // Calculate appropriate rotation duration based on vertical position
+                        const y = parseFloat(lineElement.dataset.y);
+                        const height = window.innerHeight;
+                        const normalizedY = y / height;
+                        const minDuration = 10;
+                        const maxDuration = 40;
+                        const rotationDuration = minDuration + (normalizedY * (maxDuration - minDuration));
+
+                        // Store for later use
+                        lineElement.dataset.rotationDuration = rotationDuration;
+
+                        // Start the pendulum swing animation (combined counterclockwise and clockwise motion)
+                        // Use a reasonable duration for the swing - not too fast, not too slow
+                        const swingDuration = 1.5; // 1.5 seconds for the entire motion
+
+                        setTimeout(() => {
+                            // Apply the pendulum animation - it will automatically complete the full swing sequence
+                            lineElement.style.animation = `pendulum-swing ${swingDuration}s cubic-bezier(0.25, 0.1, 0.25, 1) forwards`;
+
+                            // When the pendulum completes, seamlessly transition back to normal rotation
+                            setTimeout(() => {
+                                if (animatingLines.has(lineElement.dataset.id)) {
+                                    // Get the final angle after pendulum motion
+                                    const matrix = new DOMMatrix(window.getComputedStyle(lineElement).transform);
+                                    const endAngle = Math.atan2(matrix.b, matrix.a) * (180 / Math.PI);
+                                    lineElement.style.setProperty('--rotation', `${endAngle}deg`);
+
+                                    // Resume normal rotation with the stored duration
+                                    lineElement.style.animation = `rotate ${rotationDuration}s linear infinite`;
+
+                                    // Reset position to original (removing parallax temporarily)
+                                    const originalX = parseFloat(lineElement.dataset.originalX);
+                                    const originalY = parseFloat(lineElement.dataset.originalY);
+                                    lineElement.style.left = `${originalX}px`;
+                                    lineElement.style.top = `${originalY}px`;
+
+                                    // Remove thinning class after transition completes
+                                    setTimeout(() => {
+                                        lineElement.classList.remove('thinning');
+                                    }, 1500);
+
+                                    // Remove tracking to allow future interactions
+                                    animatingLines.delete(lineElement.dataset.id);
+                                }
+                            }, swingDuration * 1000);
+
+                            // Start gradual thickness reduction
+                            lineElement.classList.remove('thickened');
+                            lineElement.classList.add('thinning');
+
+                            // Add the plucked class to create vertical oscillation simultaneously
+                            lineElement.classList.add('plucked');
+                        }, 50);
+
+                        // Remove plucked class when that animation completes
+                        lineElement.addEventListener('animationend', event => {
+                            if (event.animationName === 'pluck') {
+                                lineElement.classList.remove('plucked');
+                            }
+                        }, { once: true });
+                    }
+                }
+
+                // Function to update parallax effect based on mouse position
+                function updateParallax(event) {
+                    if (!parallax.enabled) return;
+
+                    // Update mouse position
+                    parallax.mouseX = event.clientX || parallax.mouseX;
+                    parallax.mouseY = event.clientY || parallax.mouseY;
+
+                    // Calculate center position
+                    const centerX = parallax.windowWidth / 2;
+                    const centerY = parallax.windowHeight / 2;
+
+                    // Calculate offset from center as a percentage
+                    const offsetX = (parallax.mouseX - centerX) / centerX;
+                    const offsetY = (parallax.mouseY - centerY) / centerY;
+
+                    // Apply parallax to each line based on its depth
+                    parallax.lines.forEach(line => {
+                        // Skip lines that are currently animating
+                        if (animatingLines.has(line.dataset.id)) return;
+
+                        const depth = parseFloat(line.dataset.depth);
+                        const originalX = parseFloat(line.dataset.originalX);
+                        const originalY = parseFloat(line.dataset.originalY);
+
+                        // Calculate parallax movement with increased intensity for edge elements
+                        // This helps bring off-screen elements into view
+                        const moveX = offsetX * parallax.intensity * depth;
+                        const moveY = offsetY * parallax.intensity * depth;
+
+                        // Determine if this is an edge element (based on original position)
+                        const isEdgeElement =
+                            originalX < 0 ||
+                            originalX > parallax.windowWidth ||
+                            originalY < 0 ||
+                            originalY > parallax.windowHeight;
+
+                        // Apply edge-specific movement to help bring off-screen elements into view
+                        // Move edge elements more dramatically toward the viewport center when mouse is in that direction
+                        let edgeBoostX = 0;
+                        let edgeBoostY = 0;
+
+                        if (isEdgeElement) {
+                            // If element is off left edge and mouse is moving right, boost movement
+                            if (originalX < 0 && offsetX > 0) edgeBoostX = offsetX * 10 * depth;
+                            // If element is off right edge and mouse is moving left, boost movement
+                            if (originalX > parallax.windowWidth && offsetX < 0) edgeBoostX = offsetX * 10 * depth;
+                            // If element is off top edge and mouse is moving down, boost movement
+                            if (originalY < 0 && offsetY > 0) edgeBoostY = offsetY * 10 * depth;
+                            // If element is off bottom edge and mouse is moving up, boost movement
+                            if (originalY > parallax.windowHeight && offsetY < 0) edgeBoostY = offsetY * 10 * depth;
+                        }
+
+                        // Calculate a subtle scale adjustment based on mouse position
+                        // Lines closer to mouse appear slightly larger
+                        const distanceToMouse = Math.sqrt(
+                            Math.pow((originalX + moveX) - parallax.mouseX, 2) +
+                            Math.pow((originalY + moveY) - parallax.mouseY, 2)
+                        );
+                        const maxDistance = Math.sqrt(Math.pow(parallax.windowWidth, 2) + Math.pow(parallax.windowHeight, 2));
+                        const normalizedDistance = Math.min(distanceToMouse / (maxDistance * 0.5), 1);
+                        const proximityScale = 1 + ((1 - normalizedDistance) * 0.1 * depth);
+
+                        // Apply the base scale from depth
+                        const baseScale = 0.7 + (depth * 0.6);
+
+                        // Combine with proximity scale for dynamic scaling
+                        const totalScale = baseScale * proximityScale;
+
+                        // Get rotation from current transform
+                        const angle = line.style.getPropertyValue('--rotation') || "0deg";
+
+                        // Apply the movement and scale
+                        line.style.left = `${originalX + moveX + edgeBoostX}px`;
+                        line.style.top = `${originalY + moveY + edgeBoostY}px`;
+                        line.style.transform = `rotate(${angle}) scale(${totalScale})`;
+                    });
+                }
+
+                // Handle device tilt for mobile devices (optional)
+                function handleDeviceTilt(event) {
+                    if (!parallax.enabled || !event.gamma || !event.beta) return;
+
+                    // Normalize device orientation values to a similar range as mouse movement
+                    // gamma is left/right tilt (-90 to 90)
+                    // beta is front/back tilt (-180 to 180)
+                    const tiltX = event.gamma / 45; // Normalize to roughly -1 to 1
+                    const tiltY = event.beta / 90;  // Normalize to roughly -1 to 1
+
+                    // Calculate virtual mouse position based on tilt
+                    const virtualMouseX = parallax.windowWidth * (0.5 + tiltX * 0.5);
+                    const virtualMouseY = parallax.windowHeight * (0.5 + tiltY * 0.5);
+
+                    // Update parallax using the virtual mouse position
+                    const virtualEvent = { clientX: virtualMouseX, clientY: virtualMouseY };
+                    updateParallax(virtualEvent);
+                }
+
+                // Register all event listeners
+                container.addEventListener('mouseover', handleInteraction);
+                container.addEventListener('touchstart', handleInteraction, { passive: false });
+
+                // Add mousemove event for parallax effect
+                window.addEventListener('mousemove', updateParallax);
+
+                // Add device orientation for mobile parallax
+                if (isMobile && window.DeviceOrientationEvent) {
+                    window.addEventListener('deviceorientation', handleDeviceTilt);
+                }
+
+                // Reset parallax on window resize
+                window.addEventListener('resize', () => {
+                    parallax.windowWidth = window.innerWidth;
+                    parallax.windowHeight = window.innerHeight;
+
+                    // Reset lines array (will be repopulated on drawLines)
+                    parallax.lines = [];
+                });
+            }
+
+            // Fisher-Yates shuffle algorithm
+            function shuffleArray(array) {
+                for (let i = array.length - 1; i > 0; i--) {
+                    const j = Math.floor(Math.random() * (i + 1));
+                    [array[i], array[j]] = [array[j], array[i]];
+                }
+                return array;
+            }
+
+            // Initial draw
+            drawLines();
+
+            // Redraw on window resize with debounce
+            let resizeTimeout;
+            window.addEventListener('resize', () => {
+                clearTimeout(resizeTimeout);
+                resizeTimeout = setTimeout(drawLines, 300);
+            });
+        });
+    </script>
+</body>
+
+</html>
