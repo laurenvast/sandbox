@@ -8,6 +8,40 @@ if (isMobile) {
     numLines = 80; // Fewer lines for better mobile performance
 }
 
+// Fisher-Yates shuffle algorithm (implemented locally to avoid reference errors)
+function shuffleArray(array) {
+    for (let i = array.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [array[i], array[j]] = [array[j], array[i]];
+    }
+    return array;
+}
+
+// Track the currently active song notes for lines
+let activeSongNotes = []; // Will hold notes from the selected song
+
+// Function to update all lines with notes from a specific song
+function updateLinesWithSongNotes(songNotes) {
+    if (!songNotes || songNotes.length === 0) {
+        // If no valid song notes provided, revert to random notes
+        activeSongNotes = [];
+        return;
+    }
+
+    // Store the song notes for use when drawing lines
+    activeSongNotes = [...songNotes];
+
+    // Update existing lines with notes from the song
+    const lines = document.querySelectorAll('.line');
+    lines.forEach((line, index) => {
+        // Use modulo to cycle through the song notes
+        const noteIndex = index % songNotes.length;
+        line.dataset.note = songNotes[noteIndex];
+    });
+
+    console.log(`Updated ${lines.length} lines with notes from song (${songNotes.length} unique notes)`);
+}
+
 // Draw lines function
 function drawLines() {
     const container = document.getElementById('container');
@@ -108,9 +142,16 @@ function drawLines() {
             line.className = 'line';
             line.dataset.id = i; // Add ID for tracking
 
-            // Assign a random note from the music box scale
-            const randomNoteIndex = Math.floor(Math.random() * musicBoxScale.length);
-            line.dataset.note = musicBoxScale[randomNoteIndex];
+            // Assign a note based on active song or random from music box scale
+            if (activeSongNotes.length > 0) {
+                // Use notes from the active song, cycling through them
+                const songNoteIndex = i % activeSongNotes.length;
+                line.dataset.note = activeSongNotes[songNoteIndex];
+            } else {
+                // Use random note from music box scale
+                const randomNoteIndex = Math.floor(Math.random() * musicBoxScale.length);
+                line.dataset.note = musicBoxScale[randomNoteIndex];
+            }
 
             // Store original angle for animation
             line.style.setProperty('--rotation', `${angle}deg`);

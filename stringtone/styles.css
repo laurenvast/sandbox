@@ -131,13 +131,13 @@ input:checked+.toggle-slider:before {
 /* Add a class for the thickness animation */
 .line.thickened {
     transition: padding .2s ease-out;
-    padding: 1.5rem;
+    padding: 2rem;
     box-shadow: 0 0 15px rgba(255, 255, 255, 0.5);
 }
 
 /* Add a class for the gradual thickness reduction */
 .line.thinning {
-    transition: padding 1s ease-out;
+    transition: padding 2s ease-out;
     padding: .2rem;
 }
 

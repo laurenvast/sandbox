@@ -17,7 +17,9 @@ const autoPlay = {
     phraseTimer: null,
     patternChangeTime: null,
     usingSongMelody: false, // Flag to indicate if we're using an extracted song melody
-    songMelodyNotes: [] // Array to hold the notes of the extracted song melody
+    songMelodyNotes: [], // Array to hold the notes of the extracted song melody
+    currentSongName: null, // Track the currently playing song name
+    isChangingSong: false  // Lock to prevent concurrent song changes
 };
 
 // Start auto-play with musical patterns
@@ -63,71 +65,139 @@ function stopAutoPlay() {
     }
 }
 
-// Set a song melody to be used for auto-play
-function setSongMelody(melodyNotes) {
+// Reset playback state and clean up audio
+function resetPlaybackState() {
     // Stop current auto-play if running
     if (autoPlay.isPlaying) {
         stopAutoPlay();
     }
 
     // Clear any existing timers
+    if (autoPlay.timerId) {
+        clearTimeout(autoPlay.timerId);
+        autoPlay.timerId = null;
+    }
+
     if (autoPlay.phraseTimer) {
         clearInterval(autoPlay.phraseTimer);
         autoPlay.phraseTimer = null;
     }
 
-    // Set the new melody notes
-    autoPlay.songMelodyNotes = [...melodyNotes];
-
-    // Instead of mapping to indices, store the actual notes
+    // Reset state
     autoPlay.noteGroups = [];
-    autoPlay.patternLength = melodyNotes.length;
+    autoPlay.patternIndex = 0;
+    autoPlay.lastPlayedLines = new Map();
 
-    // Store each note directly with its original value
-    melodyNotes.forEach(note => {
-        // Each note is now an object with the actual note value
-        autoPlay.noteGroups.push({
+    // Clean up any ongoing audio
+    if (window.stopAllAudio) {
+        try {
+            window.stopAllAudio();
+        } catch (audioError) {
+            console.warn("Error stopping audio:", audioError);
+        }
+    }
+}
+
+// Set a song melody to be used for auto-play
+function setSongMelody(melodyNotes, songName) {
+    // Prevent concurrent song changes
+    if (autoPlay.isChangingSong) {
+        console.log('Song change in progress, please wait...');
+        return;
+    }
+
+    autoPlay.isChangingSong = true;
+    console.log(`Setting up song melody for "${songName}"...`);
+
+    try {
+        // Reset the playback state
+        resetPlaybackState();
+
+        // Set the current song name
+        autoPlay.currentSongName = songName || 'Unknown Melody';
+
+        // Set the new melody notes
+        autoPlay.songMelodyNotes = [...melodyNotes];
+        autoPlay.patternLength = melodyNotes.length;
+
+        // Store each note directly with its original value
+        autoPlay.noteGroups = melodyNotes.map(note => ({
             noteValue: note,
             isOriginal: true
-        });
-    });
+        }));
 
-    // Set flag to indicate we're using a song melody
-    autoPlay.usingSongMelody = true;
-    autoPlay.melodyType = 'song';
+        // Set flag to indicate we're using a song melody
+        autoPlay.usingSongMelody = true;
+        autoPlay.melodyType = 'song';
 
-    // Reset pattern index
-    autoPlay.patternIndex = 0;
+        // Adjust tempo based on melody length (longer melodies play a bit faster)
+        autoPlay.tempo = Math.min(160, Math.max(80, 100 + melodyNotes.length / 2));
 
-    // Adjust tempo based on melody length (longer melodies play a bit faster)
-    autoPlay.tempo = Math.min(160, Math.max(80, 100 + melodyNotes.length / 2));
+        // Update all the lines with notes from this song melody
+        if (typeof updateLinesWithSongNotes === 'function') {
+            updateLinesWithSongNotes(melodyNotes);
+        }
 
-    // Start auto-play with the new melody
-    if (autoPlay.enabled) {
-        startAutoPlay();
+        console.log(`Now playing: "${autoPlay.currentSongName}" with ${melodyNotes.length} notes`);
+
+        // Start auto-play with the new melody after a short delay
+        if (autoPlay.enabled) {
+            setTimeout(startAutoPlay, 100);
+        }
+    } catch (error) {
+        console.error('Error setting song melody:', error);
+    } finally {
+        // Always release the lock, even if there's an error
+        autoPlay.isChangingSong = false;
     }
 }
 
 // Clear song melody and return to normal auto-play
 function clearSongMelody() {
-    if (!autoPlay.usingSongMelody) return;
+    if (!autoPlay.usingSongMelody && !autoPlay.isPlaying) return;
 
-    // Stop current auto-play if running
-    if (autoPlay.isPlaying) {
-        stopAutoPlay();
+    // Prevent concurrent song changes
+    if (autoPlay.isChangingSong) {
+        console.log('Song change in progress, please wait...');
+        return;
     }
 
-    // Reset song melody flag
-    autoPlay.usingSongMelody = false;
-    autoPlay.songMelodyNotes = [];
+    autoPlay.isChangingSong = true;
+    console.log('Clearing song melody...');
 
-    // Generate a new pattern with regular algorithm
-    autoPlay.melodyType = ['arpeggio', 'scale', 'random', 'cluster'][Math.floor(Math.random() * 4)];
-    generateMusicalPattern();
+    try {
+        // Reset the playback state
+        resetPlaybackState();
 
-    // Start auto-play with new pattern
-    if (autoPlay.enabled) {
-        startAutoPlay();
+        // Reset song-related state
+        autoPlay.usingSongMelody = false;
+        autoPlay.songMelodyNotes = [];
+        autoPlay.currentSongName = null;
+
+        // Clear the song notes from lines too
+        if (typeof updateLinesWithSongNotes === 'function') {
+            updateLinesWithSongNotes([]);
+        }
+
+        // Generate a new pattern with regular algorithm
+        autoPlay.melodyType = ['arpeggio', 'scale', 'random', 'cluster'][Math.floor(Math.random() * 4)];
+        generateMusicalPattern();
+
+        // Start new auto-play if enabled after a short delay
+        if (autoPlay.enabled) {
+            setTimeout(startAutoPlay, 100);
+        }
+
+        console.log('Cleared song melody, returning to regular auto-play');
+    } catch (error) {
+        console.error('Error clearing song melody:', error);
+
+        // Force reset of critical state variables
+        autoPlay.isPlaying = false;
+        autoPlay.usingSongMelody = false;
+    } finally {
+        // Always release the lock, even if there's an error
+        autoPlay.isChangingSong = false;
     }
 }
 
@@ -368,26 +438,70 @@ function playNoteDirectly(noteItem) {
     // Try to find a matching line for visual feedback
     let matchingLine = null;
 
+    // Get the window dimensions
+    const windowWidth = window.innerWidth;
+    const windowHeight = window.innerHeight;
+
+    // Define edge boundaries (consider 10% of screen width/height as edge)
+    const edgeThresholdX = windowWidth * 0.1;
+    const edgeThresholdY = windowHeight * 0.1;
+
+    // First try to find a non-edge line with matching note
     parallax.lines.forEach(line => {
         if (!matchingLine && !animatingLines.has(line.dataset.id)) {
             const lineNote = line.dataset.note;
 
-            // Try for an exact match first
-            if (lineNote === noteValue) {
+            // Get line position
+            const rect = line.getBoundingClientRect();
+            const lineX = rect.left + rect.width / 2;
+            const lineY = rect.top + rect.height / 2;
+
+            // Check if line is not at the edge
+            const isEdgeLine = (
+                lineX < edgeThresholdX ||
+                lineX > (windowWidth - edgeThresholdX) ||
+                lineY < edgeThresholdY ||
+                lineY > (windowHeight - edgeThresholdY)
+            );
+
+            // Try for an exact match first, but only use it if not at edge
+            if (lineNote === noteValue && !isEdgeLine) {
                 matchingLine = line;
             }
         }
     });
 
-    // If we couldn't find an exact match but still need visual feedback,
-    // just pick a random available line
+    // If we couldn't find an exact match, try to find a non-edge line
     if (!matchingLine) {
-        const availableLines = [...parallax.lines].filter(
-            line => !animatingLines.has(line.dataset.id)
-        );
+        // Get all available lines that aren't at the edges
+        const availableLines = [...parallax.lines].filter(line => {
+            if (animatingLines.has(line.dataset.id)) return false;
+
+            // Check position
+            const rect = line.getBoundingClientRect();
+            const lineX = rect.left + rect.width / 2;
+            const lineY = rect.top + rect.height / 2;
+
+            // Return true only for lines not at edges
+            return !(
+                lineX < edgeThresholdX ||
+                lineX > (windowWidth - edgeThresholdX) ||
+                lineY < edgeThresholdY ||
+                lineY > (windowHeight - edgeThresholdY)
+            );
+        });
 
         if (availableLines.length > 0) {
             matchingLine = availableLines[Math.floor(Math.random() * availableLines.length)];
+        } else {
+            // If all lines are at edges or animating, fall back to any non-animating line
+            const anyAvailableLine = [...parallax.lines].filter(
+                line => !animatingLines.has(line.dataset.id)
+            );
+
+            if (anyAvailableLine.length > 0) {
+                matchingLine = anyAvailableLine[Math.floor(Math.random() * anyAvailableLine.length)];
+            }
         }
     }
 
@@ -414,8 +528,15 @@ function playAutomatedLines(noteIndices) {
     // Old format handling (for algorithmic patterns)
     if (!Array.isArray(noteIndices) || noteIndices.length === 0) return;
 
+    // Get window dimensions and define edge boundaries
+    const windowWidth = window.innerWidth;
+    const windowHeight = window.innerHeight;
+    const edgeThresholdX = windowWidth * 0.1;
+    const edgeThresholdY = windowHeight * 0.1;
+
     // Find lines that match these notes
     const availableLines = [];
+    const edgeLines = []; // Separate array to store edge lines as fallback
 
     // Get all lines with the specified notes
     parallax.lines.forEach(line => {
@@ -426,31 +547,53 @@ function playAutomatedLines(noteIndices) {
         const noteIndex = musicBoxScale.indexOf(lineNote);
 
         if (noteIndices.includes(noteIndex)) {
-            availableLines.push({
+            // Check if line is at the edge
+            const rect = line.getBoundingClientRect();
+            const lineX = rect.left + rect.width / 2;
+            const lineY = rect.top + rect.height / 2;
+
+            const isEdgeLine = (
+                lineX < edgeThresholdX ||
+                lineX > (windowWidth - edgeThresholdX) ||
+                lineY < edgeThresholdY ||
+                lineY > (windowHeight - edgeThresholdY)
+            );
+
+            const lineObj = {
                 line: line,
                 noteIndex: noteIndex
-            });
+            };
+
+            // Sort into appropriate array
+            if (isEdgeLine) {
+                edgeLines.push(lineObj);
+            } else {
+                availableLines.push(lineObj);
+            }
         }
     });
 
+    // If no non-edge lines are available, use edge lines as fallback
+    let linesToUse = availableLines.length > 0 ? availableLines : edgeLines;
+
     // For non-song melodies, shuffle 
-    shuffleArray(availableLines);
+    shuffleArray(linesToUse);
 
     // Select lines to play based on dynamic level
     let linesToPlay = 1; // Default for 'soft'
     if (autoPlay.dynamicLevel === 'medium') {
-        linesToPlay = Math.min(2, availableLines.length);
+        linesToPlay = Math.min(2, linesToUse.length);
     } else if (autoPlay.dynamicLevel === 'loud') {
-        linesToPlay = Math.min(3, availableLines.length);
+        linesToPlay = Math.min(3, linesToUse.length);
     }
 
     // Limit to the number of available lines
-    linesToPlay = Math.min(linesToPlay, availableLines.length);
+    linesToPlay = Math.min(linesToPlay, linesToUse.length);
 
     // Play the selected lines
     for (let i = 0; i < linesToPlay; i++) {
-        if (i < availableLines.length) {
-            const lineObj = availableLines[i];
+        if (i < linesToUse.length) {
+            const lineObj = linesToUse[i];
             simulateLineInteraction(lineObj.line);
         }
     }

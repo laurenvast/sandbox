@@ -28,35 +28,95 @@ const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
 // Track active animations to prevent multiple on same element
 const animatingLines = new Set();
 
-// Function to start the audio context
-function startAudio() {
+// Track audio initialization state
+let audioInitialized = false;
+
+// Play welcome chime
+function playWelcomeChime() {
+    try {
+        // Play a quick ascending 3-note pattern typical of music boxes
+        synth.triggerAttackRelease('C6', 0.1);
+        setTimeout(() => synth.triggerAttackRelease('E6', 0.1), 150);
+        setTimeout(() => synth.triggerAttackRelease('G6', 0.1), 300);
+    } catch (e) {
+        console.warn("Could not play welcome notes:", e);
+    }
+}
+
+// Initialize Tone.js audio context
+function initializeToneContext() {
     if (Tone.context.state !== 'running') {
-        Tone.start().then(() => {
-            console.log('Audio context started');
+        return Tone.start()
+            .then(() => {
+                console.log('Audio context started');
+                audioInitialized = true;
+                return true;
+            })
+            .catch(error => {
+                console.error("Error initializing Tone.js:", error);
+                return false;
+            });
+    } else {
+        console.log('Audio system already initialized');
+        audioInitialized = true;
+        return Promise.resolve(true);
+    }
+}
+
+// Function to start the audio context - called on user interaction
+function startAudio() {
+    initializeToneContext().then(success => {
+        if (success) {
+            // Update UI elements
             const audioNotice = document.getElementById('audioNotice');
             const autoPlayToggle = document.getElementById('autoPlayToggle');
 
-            audioNotice.style.opacity = '0';
-            setTimeout(() => {
-                audioNotice.style.display = 'none';
-                autoPlayToggle.style.display = 'flex'; // Show auto-play toggle after audio is enabled
-            }, 500);
-
-            // Play a subtle music box sound to confirm audio is working
-            setTimeout(() => {
-                // Play a quick ascending 3-note pattern typical of music boxes
-                synth.triggerAttackRelease('C6', 0.1);
-                setTimeout(() => synth.triggerAttackRelease('E6', 0.1), 150);
-                setTimeout(() => synth.triggerAttackRelease('G6', 0.1), 300);
-
-                // Start auto-play after the welcome notes
+            if (audioNotice) {
+                audioNotice.style.opacity = '0';
                 setTimeout(() => {
-                    if (autoPlay.enabled) {
-                        startAutoPlay();
+                    audioNotice.style.display = 'none';
+                    if (autoPlayToggle) {
+                        autoPlayToggle.style.display = 'flex';
                     }
                 }, 500);
-            }, 300);
+            }
+
+            // Play welcome sound if first initialization
+            if (!window.welcomeSoundPlayed) {
+                window.welcomeSoundPlayed = true;
+                setTimeout(playWelcomeChime, 300);
+            }
+        }
+    });
+}
+
+// Make initializeAudio available globally
+window.initializeAudio = function () {
+    return initializeToneContext();
+};
+
+// Function to completely stop all audio
+window.stopAllAudio = function () {
+    console.log("Stopping all audio...");
+
+    try {
+        // Release all notes that might be currently playing
+        if (synth && typeof synth.releaseAll === 'function') {
+            synth.releaseAll();
+        }
+
+        // Cancel any scheduled events in Tone.js
+        Tone.Transport.cancel();
+
+        // Reset any animating lines
+        animatingLines.clear();
+        document.querySelectorAll('.line.thickened, .line.thinning, .line.plucked').forEach(line => {
+            line.classList.remove('thickened', 'thinning', 'plucked');
         });
+
+        console.log("All audio stopped");
+    } catch (error) {
+        console.error("Error stopping audio:", error);
     }
 }
 
