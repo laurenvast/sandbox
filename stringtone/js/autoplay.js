@@ -11,11 +11,13 @@ const autoPlay = {
     noteGroups: [], // Each element will be a group of notes planned to play together
     lastPlayedLines: new Map(), // Map to track recently played lines to avoid immediate repetition
     timerId: null,
-    melodyType: 'arpeggio', // 'arpeggio', 'scale', 'random', 'cluster'
+    melodyType: 'arpeggio', // 'arpeggio', 'scale', 'random', 'cluster', 'song'
     dynamicLevel: 'medium', // 'soft', 'medium', 'loud'
     phraseDuration: 8000, // Duration of a musical phrase in ms
     phraseTimer: null,
-    patternChangeTime: null
+    patternChangeTime: null,
+    usingSongMelody: false, // Flag to indicate if we're using an extracted song melody
+    songMelodyNotes: [] // Array to hold the notes of the extracted song melody
 };
 
 // Start auto-play with musical patterns
@@ -32,15 +34,18 @@ function startAutoPlay() {
     scheduleNextNote();
 
     // Set up timer to change patterns for musical variety
-    autoPlay.phraseTimer = setInterval(() => {
-        if (autoPlay.enabled) {
-            generateMusicalPattern();
-            autoPlay.patternIndex = 0; // Reset to beginning of new pattern
+    // Only if not using song melody
+    if (!autoPlay.usingSongMelody) {
+        autoPlay.phraseTimer = setInterval(() => {
+            if (autoPlay.enabled) {
+                generateMusicalPattern();
+                autoPlay.patternIndex = 0; // Reset to beginning of new pattern
 
-            // Randomly change melodic style for variety
-            changeMusicalStyle();
-        }
-    }, autoPlay.phraseDuration);
+                // Randomly change melodic style for variety
+                changeMusicalStyle();
+            }
+        }, autoPlay.phraseDuration);
+    }
 }
 
 // Stop auto-play
@@ -58,8 +63,93 @@ function stopAutoPlay() {
     }
 }
 
+// Set a song melody to be used for auto-play
+function setSongMelody(melodyNotes) {
+    // Stop current auto-play if running
+    if (autoPlay.isPlaying) {
+        stopAutoPlay();
+    }
+
+    // Clear any existing timers
+    if (autoPlay.phraseTimer) {
+        clearInterval(autoPlay.phraseTimer);
+        autoPlay.phraseTimer = null;
+    }
+
+    // Set the new melody notes
+    autoPlay.songMelodyNotes = melodyNotes;
+
+    // Map melody notes to note indices
+    autoPlay.noteGroups = [];
+    autoPlay.patternLength = melodyNotes.length;
+
+    melodyNotes.forEach(note => {
+        // Find index of this note in our scale
+        const noteIndex = musicBoxScale.indexOf(note);
+
+        // If note exists in our scale, use it
+        // Otherwise, find closest note
+        if (noteIndex !== -1) {
+            autoPlay.noteGroups.push([noteIndex]);
+        } else {
+            // Find note without octave
+            const noteName = note.replace(/\d+$/, '');
+            // Find closest matching note in our scale
+            const closeMatch = musicBoxScale.findIndex(n => n.startsWith(noteName));
+
+            if (closeMatch !== -1) {
+                autoPlay.noteGroups.push([closeMatch]);
+            } else {
+                // If no close match, just use a random note
+                autoPlay.noteGroups.push([Math.floor(Math.random() * musicBoxScale.length)]);
+            }
+        }
+    });
+
+    // Set flag to indicate we're using a song melody
+    autoPlay.usingSongMelody = true;
+    autoPlay.melodyType = 'song';
+
+    // Reset pattern index
+    autoPlay.patternIndex = 0;
+
+    // Adjust tempo based on melody length (longer melodies play a bit faster)
+    autoPlay.tempo = Math.min(160, Math.max(80, 100 + melodyNotes.length));
+
+    // Start auto-play with the new melody
+    if (autoPlay.enabled) {
+        startAutoPlay();
+    }
+}
+
+// Clear song melody and return to normal auto-play
+function clearSongMelody() {
+    if (!autoPlay.usingSongMelody) return;
+
+    // Stop current auto-play if running
+    if (autoPlay.isPlaying) {
+        stopAutoPlay();
+    }
+
+    // Reset song melody flag
+    autoPlay.usingSongMelody = false;
+    autoPlay.songMelodyNotes = [];
+
+    // Generate a new pattern with regular algorithm
+    autoPlay.melodyType = ['arpeggio', 'scale', 'random', 'cluster'][Math.floor(Math.random() * 4)];
+    generateMusicalPattern();
+
+    // Start auto-play with new pattern
+    if (autoPlay.enabled) {
+        startAutoPlay();
+    }
+}
+
 // Generate a musical pattern based on the current melodic type
 function generateMusicalPattern() {
+    // If using song melody, we don't need to generate a pattern
+    if (autoPlay.usingSongMelody) return;
+
     const pattern = [];
     autoPlay.noteGroups = [];
 

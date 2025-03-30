@@ -14,6 +14,24 @@
 <body>
     <div id="container"></div>
     <div class="audio-notice" id="audioNotice">Click anywhere to enable sound</div>
+
+    <!-- Song Selection UI -->
+    <div class="song-input-container" id="songInputContainer">
+        <div class="song-input-header">
+            <span>Play a Song</span>
+            <button id="toggleSongInput" class="toggle-button">+</button>
+        </div>
+        <div class="song-input-panel" id="songInputPanel">
+            <input type="text" id="songNameInput" placeholder="Enter a song or melody name">
+            <button id="extractButton">Extract Melody</button>
+            <div class="song-suggestions" id="songSuggestions">
+                <h4>Suggestions:</h4>
+                <ul id="suggestionList"></ul>
+            </div>
+            <div class="status-message" id="extractionStatus"></div>
+        </div>
+    </div>
+
     <div class="auto-play-toggle" id="autoPlayToggle">
         <span>Auto-Play</span>
         <label class="toggle-switch">
@@ -26,6 +44,7 @@
     <script src="js/audio.js"></script>
     <script src="js/lines.js"></script>
     <script src="js/parallax.js"></script>
+    <script src="js/melodyExtractor.js"></script>
     <script src="js/autoplay.js"></script>
     <script src="js/main.js"></script>
 </body>

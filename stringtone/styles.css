@@ -198,3 +198,172 @@ input:checked+.toggle-slider:before {
     animation: pluck 0.6s cubic-bezier(0.215, 0.610, 0.355, 1.000);
     z-index: 10;
 }
+
+/* Song Input Container Styling */
+.song-input-container {
+    position: fixed;
+    top: 20px;
+    left: 20px;
+    background-color: rgba(0, 0, 0, 0.7);
+    color: white;
+    border-radius: 20px;
+    font-family: Arial, sans-serif;
+    z-index: 100;
+    transition: all 0.3s ease;
+    overflow: hidden;
+    width: 300px;
+    max-width: 90vw;
+}
+
+.song-input-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 15px;
+    cursor: pointer;
+}
+
+.toggle-button {
+    background: none;
+    border: none;
+    color: white;
+    font-size: 24px;
+    cursor: pointer;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+    transition: transform 0.3s ease;
+    padding: 0;
+}
+
+.toggle-button.active {
+    transform: rotate(45deg);
+}
+
+.song-input-panel {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.3s ease, padding 0.3s ease;
+    padding: 0 15px;
+}
+
+.song-input-panel.active {
+    max-height: 300px;
+    padding: 0 15px 15px 15px;
+    overflow-y: auto;
+}
+
+#songNameInput {
+    width: 100%;
+    padding: 8px 12px;
+    margin: 5px 0;
+    border: none;
+    border-radius: 15px;
+    background-color: rgba(255, 255, 255, 0.9);
+    box-sizing: border-box;
+    font-size: 14px;
+}
+
+#extractButton {
+    width: 100%;
+    padding: 8px 12px;
+    margin: 8px 0;
+    border: none;
+    border-radius: 15px;
+    background-color: #8338ec;
+    color: white;
+    cursor: pointer;
+    font-size: 14px;
+    transition: background-color 0.2s;
+}
+
+#extractButton:hover {
+    background-color: #6a27c9;
+}
+
+#extractButton:disabled {
+    background-color: #555;
+    cursor: not-allowed;
+}
+
+.song-suggestions {
+    margin-top: 10px;
+}
+
+.song-suggestions h4 {
+    margin: 5px 0;
+    font-size: 14px;
+    font-weight: normal;
+    opacity: 0.8;
+}
+
+#suggestionList {
+    list-style: none;
+    padding: 0;
+    margin: 5px 0;
+}
+
+#suggestionList li {
+    padding: 5px 0;
+    cursor: pointer;
+    font-size: 14px;
+    transition: opacity 0.2s;
+}
+
+#suggestionList li:hover {
+    opacity: 0.7;
+}
+
+.status-message {
+    font-size: 12px;
+    margin-top: 10px;
+    font-style: italic;
+    min-height: 20px;
+}
+
+/* When auto-play is disabled styles */
+.auto-play-toggle.song-active {
+    background-color: rgba(131, 56, 236, 0.7);
+}
+
+/* Responsive adjustments for small screens */
+@media (max-width: 480px) {
+    .song-input-container {
+        max-width: calc(100vw - 40px);
+    }
+
+    #songNameInput,
+    #extractButton {
+        font-size: 16px;
+        /* Larger touch targets for mobile */
+        padding: 10px;
+    }
+}
+
+/* Line animation for active song mode */
+.line.song-active {
+    box-shadow: 0 0 8px rgba(131, 56, 236, 0.5);
+}
+
+/* Pulsing animation for the song container when a song is active */
+@keyframes pulse {
+    0% {
+        box-shadow: 0 0 0 0 rgba(131, 56, 236, 0.4);
+    }
+
+    70% {
+        box-shadow: 0 0 0 10px rgba(131, 56, 236, 0);
+    }
+
+    100% {
+        box-shadow: 0 0 0 0 rgba(131, 56, 236, 0);
+    }
+}
+
+.song-input-container.pulsing {
+    animation: pulse 2s infinite;
+}
