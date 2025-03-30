@@ -5,7 +5,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Unified Player elements
     const unifiedPlayer = document.getElementById('unifiedPlayer');
-    const toggleSongPanel = document.getElementById('toggleSongPanel');
     const songPanel = document.getElementById('songPanel');
     const songNameInput = document.getElementById('songNameInput');
     const extractButton = document.getElementById('extractButton');
@@ -45,12 +44,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Setup all event listeners
     function setupEventListeners() {
-        // Toggle song panel
-        toggleSongPanel.addEventListener('click', (e) => {
-            toggleSongPanelVisibility();
-            e.stopPropagation(); // Prevent propagation to parent elements
-        });
-
         // Also make the header collapsible
         document.querySelector('.player-header').addEventListener('click', (e) => {
             // Only toggle if not clicking on play/pause button
@@ -142,7 +135,6 @@ document.addEventListener('DOMContentLoaded', () => {
     // Toggle song panel visibility
     function toggleSongPanelVisibility() {
         songPanel.classList.toggle('active');
-        toggleSongPanel.classList.toggle('active');
     }
 
     // Handle extract button click
