@@ -1,11 +1,35 @@
+/* Import Google Fonts */
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&family=Open+Sans:wght@400;500;600&display=swap');
+
+/* CSS Variables for consistent theming */
+:root {
+    --primary-color: #8338ec;
+    --secondary-color: #4a038c;
+    --accent-color: #f2c02c;
+    --text-light: #ffffff;
+    --text-dark: #1f1f1f;
+    --background-gradient: linear-gradient(0deg, #3a0ca3, #4a038c, #8338ec);
+    --background-color: #4a038c;
+    --shadow-color: rgba(0, 0, 0, 0.2);
+    --transition-standard: all 0.3s ease;
+    --font-heading: 'Montserrat', sans-serif;
+    --font-body: 'Open Sans', sans-serif;
+    --player-bg: rgba(131, 56, 236, 0.2);
+}
+
+/* Base Styles */
 body {
     margin: 0;
     overflow: hidden;
-    background-color: #3c038c;
+    background: var(--background-color);
     height: 100vh;
     width: 100vw;
     touch-action: manipulation;
     /* Prevent double-tap zoom on mobile */
+    font-family: var(--font-body);
+    color: var(--text-light);
+    background-size: 300% 300%;
+    animation: background-shift 20s ease infinite;
 }
 
 #container {
@@ -14,103 +38,339 @@ body {
     height: 100%;
 }
 
+main {
+    height: 100%;
+    position: relative;
+}
+
+/* Typography */
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+    font-family: var(--font-heading);
+    font-weight: 600;
+}
+
+button,
+input {
+    font-family: var(--font-body);
+}
+
+/* Header Styling */
+.app-header {
+    position: fixed;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 90;
+    text-align: center;
+    pointer-events: none;
+    /* Let events pass through to the background */
+}
+
+.app-title {
+    font-family: var(--font-heading);
+    font-weight: 700;
+    font-size: 28px;
+    margin: 0;
+    color: var(--text-light);
+    text-shadow: 0 2px 8px rgba(0, 0, 0, 0.3), 0 0 20px rgba(131, 56, 236, 0.8);
+    letter-spacing: 1px;
+    opacity: 0.9;
+    transition: var(--transition-standard);
+    animation: title-glow 4s ease-in-out infinite;
+}
+
+/* Audio Notice */
 .audio-notice {
     position: fixed;
     bottom: 20px;
     left: 50%;
     transform: translateX(-50%);
-    background-color: rgba(0, 0, 0, 0.7);
-    color: white;
+    background-color: var(--player-bg);
+    color: var(--text-light);
     padding: 10px 20px;
     border-radius: 20px;
-    font-family: Arial, sans-serif;
+    font-family: var(--font-body);
     z-index: 100;
     cursor: pointer;
     transition: opacity 0.5s ease;
     text-align: center;
     max-width: 90%;
     font-size: 16px;
+    box-shadow: 0 4px 10px var(--shadow-color);
+    animation: fade-in 0.5s ease-out forwards;
+    animation-delay: 0.3s;
 }
 
-/* Auto-play toggle button styling */
-.auto-play-toggle {
+/* Minimal Unified Player */
+.unified-player {
     position: fixed;
     top: 20px;
     right: 20px;
-    background-color: rgba(0, 0, 0, 0.7);
-    color: white;
-    padding: 10px 15px;
-    border-radius: 20px;
-    font-family: Arial, sans-serif;
+    background-color: var(--player-bg);
+    color: var(--text-light);
+    border-radius: 30px;
+    font-family: var(--font-body);
     z-index: 100;
-    cursor: pointer;
-    transition: all 0.3s ease;
+    transition: var(--transition-standard);
+    overflow: hidden;
+    width: 280px;
+    max-width: 90vw;
+    /* box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15); */
+    animation: fade-in 0.5s ease-out forwards;
+    backdrop-filter: blur(5px);
+}
+
+.unified-player.pulsing {
+    animation: pulse 2s infinite;
+}
+
+/* .unified-player.active {
+    background-color: var(--player-active);
+} */
+
+/* Player Header */
+.player-header {
+    padding: 12px 15px;
     display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.player {
+    display: flex;
+    justify-content: space-between;
     align-items: center;
+    cursor: default;
+}
+
+.song-info {
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    flex: 1;
+}
+
+.current-song-name {
+    font-size: 14px;
+    font-weight: 500;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 200px;
+}
+
+.current-song-name.status-loading {
+    font-style: italic;
+    opacity: 0.7;
+    position: relative;
+}
+
+.current-song-name.status-error {
+    color: #FF6B6B;
+    border-left-color: #FF6B6B;
+}
+
+/* Style for the status icons in the current song name */
+.current-song-name::before {
+    margin-right: 5px;
+    display: inline-block;
+}
+
+.current-song-name.scrolling {
+    animation: scroll-text 8s linear infinite;
+    animation-delay: 1s;
+    padding-right: 90px;
+}
+
+.player-status {
+    font-size: 11px;
+    opacity: 0.7;
+    margin-top: 2px;
+    transition: opacity 0.3s ease;
+    height: 14px;
+    /* Fixed height to prevent layout shifts */
+}
+
+.player-status:empty {
+    opacity: 0;
+}
+
+.player-actions {
+    display: flex;
     gap: 8px;
 }
 
-.auto-play-toggle:hover {
-    background-color: rgba(0, 0, 0, 0.9);
-}
-
-.toggle-switch {
-    position: relative;
-    display: inline-block;
-    width: 40px;
-    height: 24px;
-}
-
-.toggle-switch input {
-    opacity: 0;
-    width: 0;
-    height: 0;
-}
-
-.toggle-slider {
-    position: absolute;
+.action-button {
+    background: none;
+    border: none;
+    color: var(--text-light);
+    font-size: 16px;
     cursor: pointer;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background-color: #ccc;
-    transition: .4s;
-    border-radius: 34px;
-}
-
-.toggle-slider:before {
-    position: absolute;
-    content: "";
-    height: 16px;
-    width: 16px;
-    left: 4px;
-    bottom: 4px;
-    background-color: white;
-    transition: .4s;
+    width: 28px;
+    height: 28px;
     border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: var(--transition-standard);
+    background-color: rgba(255, 255, 255, 0.1);
 }
 
-input:checked+.toggle-slider {
-    background-color: #8338ec;
+.action-button:hover {
+    background-color: rgba(255, 255, 255, 0.2);
+    transform: translateY(-2px);
 }
 
-input:checked+.toggle-slider:before {
-    transform: translateX(16px);
+/* Song Panel */
+.song-panel {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.3s ease-out, padding 0.3s ease-out;
 }
 
+.song-panel.active {
+    max-height: 500px;
+    padding: 0 15px 15px;
+}
+
+/* Song Search */
+.song-search {
+    display: flex;
+    gap: 8px;
+}
+
+#songNameInput {
+    flex: 1;
+    /* padding: 10px 12px; */
+    border: none;
+    border-radius: 20px;
+    background-color: rgba(255, 255, 255, 0.1);
+    color: var(--text-light);
+    font-size: 13px;
+    transition: var(--transition-standard);
+    padding-left: 8px;
+}
+
+#songNameInput:hover {
+    background-color: rgba(255, 255, 255, 0.2);
+}
+
+#songNameInput:focus {
+    outline: none;
+    background-color: rgba(255, 255, 255, 0.15);
+    box-shadow: 0 0 0 2px rgba(131, 56, 236, 0.3);
+}
+
+#songNameInput::placeholder {
+    color: rgba(255, 255, 255, 0.5);
+}
+
+#extractButton {
+    padding: 8px 12px;
+    border: none;
+    border-radius: 20px;
+    background-color: var(--primary-color);
+    color: var(--text-light);
+    cursor: pointer;
+    font-weight: 500;
+    font-size: 13px;
+    transition: var(--transition-standard);
+}
+
+#extractButton:hover {
+    background-color: var(--accent-color);
+    transform: translateY(-2px);
+    color: var(--secondary-color);
+}
+
+#extractButton:disabled {
+    background-color: rgba(131, 56, 236, 0.5);
+    cursor: not-allowed;
+    transform: none;
+}
+
+#suggestionList {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    max-height: 150px;
+    overflow-y: auto;
+    border-radius: 10px;
+    background-color: rgba(255, 255, 255, 0.05);
+}
+
+#suggestionList:empty {
+    display: none;
+}
+
+#suggestionList li {
+    padding: 8px 12px;
+    cursor: pointer;
+    font-size: 13px;
+    transition: var(--transition-standard);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+#suggestionList li:last-child {
+    border-bottom: none;
+}
+
+#suggestionList li:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+/* Currently playing song indicator */
+#suggestionList li.playing {
+    background-color: rgba(131, 56, 236, 0.2);
+    box-shadow: inset 3px 0 0 0 var(--accent-color);
+    font-weight: 500;
+    position: relative;
+    padding-right: 25px;
+}
+
+#suggestionList li.playing::before {
+    content: "♫";
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-weight: bolder;
+    /* font-size: 10px; */
+    color: var(--accent-color);
+    animation: pulse 1.5s infinite ease-in-out;
+    border-radius: 20px;
+}
+
+/* Status Message */
+.status-message {
+    font-size: 12px;
+    font-style: italic;
+    opacity: 0.7;
+    text-align: center;
+    margin-bottom: 12px;
+}
+
+/* Line Styling - PRESERVE THIS SECTION FOR LINE FUNCTIONALITY */
 .line {
     position: absolute;
     height: 1rem;
-    background-color: black;
+    background-color: var(--accent-color);
     transform-origin: 50% 50%;
     pointer-events: auto;
-    /* Enable mouse events */
-    transition: transform 0.05s ease-out;
-    /* Smooth initial response */
+    transition: transform 0.05s ease-out, background-color 0.3s ease;
     padding: .2rem;
     border-radius: 1rem;
     box-sizing: border-box;
+    box-shadow: 0 0 2px rgba(255, 255, 255, 0);
+}
+
+.line.song-active {
+    box-shadow: 0 0 8px rgba(131, 56, 236, 0.5);
 }
 
 /* Make lines easier to touch on mobile */
@@ -123,22 +383,26 @@ input:checked+.toggle-slider:before {
     }
 
     .line.thickened {
-        padding: 0.6rem;
+        padding: 1rem;
         /* Thicker padding for mobile when activated */
     }
 }
 
-/* Add a class for the thickness animation */
+/* Enhanced thickened line animation with gradient */
 .line.thickened {
-    transition: padding .2s ease-out;
+    transition: padding .2s ease-out, box-shadow 0.3s ease;
     padding: 2rem;
-    box-shadow: 0 0 15px rgba(255, 255, 255, 0.5);
+    box-shadow: 0 0 20px rgba(255, 255, 255, 0.7), 0 0 40px var(--primary-color);
+    background: linear-gradient(90deg, var(--primary-color), var(--accent-color), var(--primary-color));
+    background-size: 200% 100%;
+    animation: gradient-shift 2s ease infinite;
 }
 
 /* Add a class for the gradual thickness reduction */
 .line.thinning {
-    transition: padding 2s ease-out;
+    transition: padding 1.5s ease-out, box-shadow 1.5s ease-out;
     padding: .2rem;
+    box-shadow: 0 0 2px rgba(255, 255, 255, 0);
 }
 
 /* Add continuous rotation animation */
@@ -167,192 +431,209 @@ input:checked+.toggle-slider:before {
     }
 }
 
-/* Animation for the plucked string effect */
+/* Improved plucking animation with more dynamic movement */
 @keyframes pluck {
     0% {
         transform: translateY(0) rotate(var(--rotation));
+        box-shadow: 0 0 2px rgba(255, 255, 255, 0);
     }
 
-    20% {
+    10% {
         transform: translateY(var(--pluck-height)) rotate(var(--rotation));
+        box-shadow: 0 0 15px rgba(255, 255, 255, 0.7);
     }
 
-    40% {
-        transform: translateY(calc(var(--pluck-height) * -0.8)) rotate(var(--rotation));
+    30% {
+        transform: translateY(calc(var(--pluck-height) * -0.9)) rotate(var(--rotation));
+        box-shadow: 0 0 12px var(--accent-color);
     }
 
-    60% {
-        transform: translateY(calc(var(--pluck-height) * 0.6)) rotate(var(--rotation));
+    50% {
+        transform: translateY(calc(var(--pluck-height) * 0.7)) rotate(var(--rotation));
+        box-shadow: 0 0 10px var(--primary-color);
     }
 
-    80% {
-        transform: translateY(calc(var(--pluck-height) * -0.4)) rotate(var(--rotation));
+    70% {
+        transform: translateY(calc(var(--pluck-height) * -0.5)) rotate(var(--rotation));
+        box-shadow: 0 0 8px var(--secondary-color);
+    }
+
+    85% {
+        transform: translateY(calc(var(--pluck-height) * 0.3)) rotate(var(--rotation));
+        box-shadow: 0 0 5px rgba(255, 255, 255, 0.3);
     }
 
     100% {
         transform: translateY(0) rotate(var(--rotation));
+        box-shadow: 0 0 2px rgba(255, 255, 255, 0);
     }
 }
 
 .line.plucked {
-    animation: pluck 0.6s cubic-bezier(0.215, 0.610, 0.355, 1.000);
+    animation: pluck 0.8s cubic-bezier(0.215, 0.610, 0.355, 1.000);
     z-index: 10;
 }
 
-/* Song Input Container Styling */
-.song-input-container {
-    position: fixed;
-    top: 20px;
-    left: 20px;
-    background-color: rgba(0, 0, 0, 0.7);
-    color: white;
-    border-radius: 20px;
-    font-family: Arial, sans-serif;
-    z-index: 100;
-    transition: all 0.3s ease;
-    overflow: hidden;
-    width: 300px;
-    max-width: 90vw;
+/* Color variation for plucked lines based on position */
+.line:nth-child(5n+1).plucked {
+    --pluck-color: var(--accent-color);
 }
 
-.song-input-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 10px 15px;
-    cursor: pointer;
+.line:nth-child(5n+2).plucked {
+    --pluck-color: var(--primary-color);
 }
 
-.toggle-button {
-    background: none;
-    border: none;
-    color: white;
-    font-size: 24px;
-    cursor: pointer;
-    width: 30px;
-    height: 30px;
+.line:nth-child(5n+3).plucked {
+    --pluck-color: var(--secondary-color);
+}
+
+.line:nth-child(5n+4).plucked {
+    --pluck-color: #22CCBB;
+}
+
+.line:nth-child(5n+5).plucked {
+    --pluck-color: #FFBE0B;
+}
+
+/* Add a ripple effect when line is plucked */
+@keyframes ripple {
+    0% {
+        box-shadow: 0 0 0 0 rgba(255, 255, 255, 0);
+    }
+
+    30% {
+        box-shadow: 0 0 0 10px rgba(255, 255, 255, 0.3);
+    }
+
+    100% {
+        box-shadow: 0 0 0 20px rgba(255, 255, 255, 0);
+    }
+}
+
+.line.plucked::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 10px;
+    height: 10px;
+    transform: translate(-50%, -50%);
     border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    line-height: 1;
-    transition: transform 0.3s ease;
-    padding: 0;
+    background: transparent;
+    animation: ripple 0.6s ease-out;
+    z-index: -1;
 }
 
-.toggle-button.active {
-    transform: rotate(45deg);
+/* Override background color for thickened lines to create visual variety */
+.line:nth-child(3n+1).thickened {
+    background: linear-gradient(90deg, var(--primary-color), var(--accent-color));
+    background-size: 200% 100%;
 }
 
-.song-input-panel {
-    max-height: 0;
-    overflow: hidden;
-    transition: max-height 0.3s ease, padding 0.3s ease;
-    padding: 0 15px;
+.line:nth-child(3n+2).thickened {
+    background: linear-gradient(90deg, var(--accent-color), var(--secondary-color));
+    background-size: 200% 100%;
 }
 
-.song-input-panel.active {
-    max-height: 300px;
-    padding: 0 15px 15px 15px;
-    overflow-y: auto;
+.line:nth-child(3n+3).thickened {
+    background: linear-gradient(90deg, var(--secondary-color), var(--primary-color));
+    background-size: 200% 100%;
 }
 
-#songNameInput {
-    width: 100%;
-    padding: 8px 12px;
-    margin: 5px 0;
-    border: none;
-    border-radius: 15px;
-    background-color: rgba(255, 255, 255, 0.9);
-    box-sizing: border-box;
-    font-size: 14px;
+/* Mobile Responsiveness */
+@media (max-width: 768px) {
+    .app-title {
+        font-size: 24px;
+    }
+
+    .unified-player {
+        top: auto;
+        bottom: 20px;
+        right: 50%;
+        transform: translateX(50%);
+        width: 280px;
+        max-width: 90%;
+    }
 }
 
-#extractButton {
-    width: 100%;
-    padding: 8px 12px;
-    margin: 8px 0;
-    border: none;
-    border-radius: 15px;
-    background-color: #8338ec;
-    color: white;
-    cursor: pointer;
-    font-size: 14px;
-    transition: background-color 0.2s;
-}
-
-#extractButton:hover {
-    background-color: #6a27c9;
-}
-
-#extractButton:disabled {
-    background-color: #555;
-    cursor: not-allowed;
-}
-
-.song-suggestions {
-    margin-top: 10px;
-}
-
-.song-suggestions h4 {
-    margin: 5px 0;
-    font-size: 14px;
-    font-weight: normal;
-    opacity: 0.8;
-}
-
-#suggestionList {
-    list-style: none;
-    padding: 0;
-    margin: 5px 0;
-}
-
-#suggestionList li {
-    padding: 5px 0;
-    cursor: pointer;
-    font-size: 14px;
-    transition: opacity 0.2s;
-}
-
-#suggestionList li:hover {
-    opacity: 0.7;
-}
-
-.status-message {
-    font-size: 12px;
-    margin-top: 10px;
-    font-style: italic;
-    min-height: 20px;
-}
-
-/* When auto-play is disabled styles */
-.auto-play-toggle.song-active {
-    background-color: rgba(131, 56, 236, 0.7);
-}
-
-/* Responsive adjustments for small screens */
 @media (max-width: 480px) {
-    .song-input-container {
-        max-width: calc(100vw - 40px);
+    .unified-player {
+        width: calc(100% - 40px);
     }
 
-    #songNameInput,
+    .song-search {
+        flex-direction: column;
+    }
+
     #extractButton {
-        font-size: 16px;
-        /* Larger touch targets for mobile */
-        padding: 10px;
+        padding: 8px;
     }
 }
 
-/* Line animation for active song mode */
-.line.song-active {
-    box-shadow: 0 0 8px rgba(131, 56, 236, 0.5);
+/* Animations */
+@keyframes gentle-bounce {
+
+    0%,
+    100% {
+        transform: translateY(0);
+    }
+
+    50% {
+        transform: translateY(-3px);
+    }
 }
 
-/* Pulsing animation for the song container when a song is active */
+@keyframes title-glow {
+
+    0%,
+    50%,
+    100% {
+        text-shadow: 0 2px 8px rgba(0, 0, 0, 0.3), 0 0 25px rgba(131, 56, 236, 0.9);
+    }
+}
+
+@keyframes gradient-shift {
+    0% {
+        background-position: 0% 50%;
+    }
+
+    50% {
+        background-position: 100% 50%;
+    }
+
+    100% {
+        background-position: 0% 50%;
+    }
+}
+
+@keyframes scroll-text {
+
+    0%,
+    10% {
+        transform: translateX(0);
+    }
+
+    80%,
+    100% {
+        transform: translateX(calc(-100% + 100px));
+    }
+}
+
+@keyframes fade-in {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
 @keyframes pulse {
     0% {
-        box-shadow: 0 0 0 0 rgba(131, 56, 236, 0.4);
+        box-shadow: 0 0 0 0 rgba(131, 56, 236, 0.7);
     }
 
     70% {
@@ -364,6 +645,79 @@ input:checked+.toggle-slider:before {
     }
 }
 
-.song-input-container.pulsing {
-    animation: pulse 2s infinite;
+@keyframes background-shift {
+    0% {
+        background-position: 0% 50%;
+    }
+
+    50% {
+        background-position: 100% 50%;
+    }
+
+    100% {
+        background-position: 0% 50%;
+    }
+}
+
+/* Accessibility */
+button:focus,
+input:focus {
+    outline: 2px solid var(--accent-color);
+    outline-offset: 2px;
+}
+
+button:focus:not(:focus-visible),
+input:focus:not(:focus-visible) {
+    outline: none;
+}
+
+/* Music Note Icon */
+.music-icon {
+    font-size: 18px;
+    width: 28px;
+    height: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 10px;
+    color: var(--text-light);
+    opacity: 0.7;
+    transition: var(--transition-standard);
+    transform-origin: center bottom;
+    user-select: none;
+    -webkit-user-select: none;
+}
+
+.music-icon.dancing {
+    opacity: 1;
+    animation: dance-note 1.5s ease-in-out infinite;
+    text-shadow: 0 0 5px var(--primary-color), 0 0 10px rgba(131, 56, 236, 0.6);
+    color: var(--text-light);
+    font-weight: bold;
+}
+
+@keyframes dance-note {
+
+    0%,
+    100% {
+        transform: translateY(0) rotate(0deg) scale(1);
+    }
+
+    25% {
+        transform: translateY(-1px) rotate(-2deg) scale(1.01);
+    }
+
+    50% {
+        transform: translateY(0) rotate(1deg) scale(1.01);
+    }
+
+    75% {
+        transform: translateY(0.5px) rotate(-1deg) scale(1);
+    }
+}
+
+/* Extra animation for active player state */
+.unified-player.active .music-icon {
+    color: var(--text-light);
+    opacity: 0.9;
 }

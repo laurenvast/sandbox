@@ -35,6 +35,9 @@ function startAutoPlay() {
     // Start the playback loop
     scheduleNextNote();
 
+    // Update UI to reflect playing state
+    updateCurrentSongDisplayIfExists(autoPlay.currentSongName || "Unknown", true);
+
     // Set up timer to change patterns for musical variety
     // Only if not using song melody
     if (!autoPlay.usingSongMelody) {
@@ -63,6 +66,9 @@ function stopAutoPlay() {
         clearInterval(autoPlay.phraseTimer);
         autoPlay.phraseTimer = null;
     }
+
+    // Update UI to reflect stopped state
+    updateCurrentSongDisplayIfExists(autoPlay.currentSongName || "Unknown", true);
 }
 
 // Reset playback state and clean up audio
@@ -115,6 +121,9 @@ function setSongMelody(melodyNotes, songName) {
 
         // Set the current song name
         autoPlay.currentSongName = songName || 'Unknown Melody';
+
+        // Update the current song display if it exists
+        updateCurrentSongDisplayIfExists(autoPlay.currentSongName, true);
 
         // Set the new melody notes
         autoPlay.songMelodyNotes = [...melodyNotes];
@@ -197,6 +206,9 @@ function clearSongMelody() {
         autoPlay.songMelodyNotes = [];
         autoPlay.currentSongName = null;
 
+        // Update the current song display if it exists
+        updateCurrentSongDisplayIfExists("None", false);
+
         // Clear the song notes from lines too
         if (typeof updateLinesWithSongNotes === 'function') {
             updateLinesWithSongNotes([]);
@@ -221,6 +233,63 @@ function clearSongMelody() {
     } finally {
         // Always release the lock, even if there's an error
         autoPlay.isChangingSong = false;
+    }
+}
+
+// Helper function to update the current song display if it exists
+function updateCurrentSongDisplayIfExists(songName, isActive) {
+    // Check if the unified player elements exist
+    const unifiedPlayer = document.getElementById('unifiedPlayer');
+    const currentSongName = document.getElementById('currentSongName');
+    const playerStatus = document.getElementById('playerStatus');
+    const playPauseButton = document.getElementById('playPauseButton');
+    const musicIcon = document.getElementById('musicIcon');
+
+    if (unifiedPlayer && currentSongName) {
+        currentSongName.textContent = songName;
+
+        // Check if song name is too long and needs scrolling
+        checkAndApplyScrollingIfPossible(currentSongName);
+
+        if (isActive) {
+            unifiedPlayer.classList.add('active');
+        } else {
+            unifiedPlayer.classList.remove('active');
+        }
+
+        // Update player status if it exists
+        if (playerStatus) {
+            playerStatus.textContent = autoPlay.isPlaying ? "Now Playing" : "Paused";
+        }
+
+        // Update play/pause button if it exists
+        if (playPauseButton) {
+            playPauseButton.textContent = autoPlay.isPlaying ? "⏸" : "▶";
+        }
+
+        // Update music note animation
+        if (musicIcon) {
+            if (autoPlay.isPlaying) {
+                musicIcon.classList.add('dancing');
+            } else {
+                musicIcon.classList.remove('dancing');
+            }
+        }
+    }
+}
+
+// Check if song name is too long and apply scrolling if needed
+function checkAndApplyScrollingIfPossible(element) {
+    // Reset scrolling class
+    element.classList.remove('scrolling');
+
+    // Get the actual text width
+    const textWidth = element.clientWidth;
+    const containerWidth = element.parentElement.clientWidth;
+
+    // If the text is wider than its container, enable scrolling
+    if (textWidth > containerWidth) {
+        element.classList.add('scrolling');
     }
 }
 

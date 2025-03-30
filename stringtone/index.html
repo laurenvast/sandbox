@@ -5,6 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>String Tones</title>
+    <meta name="description" content="An interactive musical string visualization experience">
     <!-- Add Tone.js library -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.min.js"></script>
     <!-- External CSS -->
@@ -12,33 +13,48 @@
 </head>
 
 <body>
-    <div id="container"></div>
-    <div class="audio-notice" id="audioNotice">Click anywhere to enable sound</div>
+    <header class="app-header">
+        <h1 class="app-title">String Tones</h1>
+    </header>
 
-    <!-- Song Selection UI -->
-    <div class="song-input-container" id="songInputContainer">
-        <div class="song-input-header">
-            <span>Play a Song</span>
-            <button id="toggleSongInput" class="toggle-button">+</button>
-        </div>
-        <div class="song-input-panel" id="songInputPanel">
-            <input type="text" id="songNameInput" placeholder="Enter a song or melody name">
-            <button id="extractButton">Extract Melody</button>
-            <div class="song-suggestions" id="songSuggestions">
-                <h4>Suggestions:</h4>
-                <ul id="suggestionList"></ul>
+    <main>
+        <div id="container"></div>
+        <div class="audio-notice" id="audioNotice">Click anywhere to enable sound</div>
+
+        <!-- Minimal Unified Player -->
+        <div class="unified-player" id="unifiedPlayer">
+            <!-- Main Controls Bar -->
+            <div class="player-header">
+                <div class="player">
+                    <div class="music-icon" id="musicIcon">♫</div>
+                    <div class="song-info">
+                        <span class="current-song-name" id="currentSongName"></span>
+                        <span class="player-status" id="playerStatus"></span>
+                    </div>
+                    <div class="player-actions">
+                        <button id="playPauseButton" class="action-button" aria-label="Play or pause">⏵</button>
+                        <button id="nextSong" class="action-button" aria-label="Next song">⏭</button>
+
+                    </div>
+                </div>
+                <div class="song-search">
+                    <button id="toggleSongPanel" class="action-button" aria-label="Show song selection">+</button>
+                    <input type="text" id="songNameInput" placeholder="What melody you want?"
+                        aria-label="Song name input">
+                    <button id="extractButton" aria-label="Play song">Generate</button>
+                </div>
             </div>
-            <div class="status-message" id="extractionStatus"></div>
-        </div>
-    </div>
 
-    <div class="auto-play-toggle" id="autoPlayToggle">
-        <span>Auto-Play</span>
-        <label class="toggle-switch">
-            <input type="checkbox" id="autoPlayCheckbox" checked>
-            <span class="toggle-slider"></span>
-        </label>
-    </div>
+            <!-- Song Selection Panel -->
+            <div class="song-panel" id="songPanel">
+                <!-- <div class="status-message" id="extractionStatus" aria-live="polite"></div> -->
+                <div class="song-suggestions" id="songSuggestions">
+                    <ul id="suggestionList" role="listbox"></ul>
+                </div>
+
+            </div>
+        </div>
+    </main>
 
     <!-- External JS files -->
     <script src="js/audio.js"></script>

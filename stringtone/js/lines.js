@@ -1,6 +1,6 @@
 // Configuration for lines
 let numLines = 260; // Increased from 240 for better density
-const lineLength = 150; // 100px lines
+const lineLength = 100; // 100px lines
 const batchSize = 200; // Number of lines per batch
 
 // Adjust number of lines for mobile devices

@@ -5,7 +5,7 @@ const parallax = {
     mouseY: 0,
     windowWidth: window.innerWidth,
     windowHeight: window.innerHeight,
-    intensity: 30, // Increased from 15 to 30 for more pronounced effect
+    intensity: 80, // Increased from 15 to 30 for more pronounced effect
     lines: []
 };
 
