@@ -15,7 +15,6 @@ const melodyExtractor = {
         "Happy Birthday",
         "Canon in D",
         "Moonlight Sonata",
-        "Yesterday - The Beatles",
         "Hallelujah - Leonard Cohen"
     ],
 
@@ -95,22 +94,26 @@ const melodyExtractor = {
             { n: "D4", d: 2 }
         ],
         "Canon in D": [
-            { n: "D4", d: 1 }, { n: "A4", d: 1 },
-            { n: "B4", d: 1 }, { n: "F#4", d: 1 },
-            { n: "G4", d: 1 }, { n: "D4", d: 1 },
-            { n: "G4", d: 1 }, { n: "A4", d: 1 },
-
-            { n: "D5", d: 1 }, { n: "F#4", d: 1 },
-            { n: "G4", d: 1 }, { n: "A4", d: 1 },
-            { n: "F#4", d: 1 }, { n: "G4", d: 1 },
+            { n: "F#4", d: 1 }, { n: "E4", d: 1 },
+            { n: "D4", d: 1 }, { n: "C#4", d: 1 },
+            { n: "B3", d: 1 }, { n: "A3", d: 1 },
+            { n: "B3", d: 1 }, { n: "C#4", d: 1 },
+            { n: "D4", d: 1 }, { n: "F#4", d: 1 },
+            { n: "A4", d: 1 }, { n: "D5", d: 1 },
+            { n: "C#5", d: 1 }, { n: "B4", d: 1 },
             { n: "A4", d: 1 }, { n: "B4", d: 1 },
 
-            { n: "G4", d: 1 }, { n: "A4", d: 1 },
-            { n: "B4", d: 1 }, { n: "G4", d: 1 },
+            { n: "F#4", d: 1 }, { n: "G4", d: 1 },
             { n: "A4", d: 1 }, { n: "F#4", d: 1 },
-            { n: "G4", d: 1 }, { n: "A4", d: 1 },
+            { n: "D4", d: 1 }, { n: "F#4", d: 1 },
+            { n: "A4", d: 1 }, { n: "A3", d: 1 },
 
             { n: "D4", d: 1 }, { n: "F#4", d: 1 },
+            { n: "A4", d: 1 }, { n: "G4", d: 1 },
+            { n: "F#4", d: 1 }, { n: "D4", d: 1 },
+            { n: "E4", d: 1 }, { n: "F#4", d: 1 },
+
+            { n: "G4", d: 1 }, { n: "B4", d: 1 },
             { n: "A4", d: 1 }, { n: "G4", d: 1 },
             { n: "F#4", d: 1 }, { n: "D4", d: 1 },
             { n: "E4", d: 1 }, { n: "F#4", d: 1 }
