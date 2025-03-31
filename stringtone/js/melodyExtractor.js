@@ -10,6 +10,7 @@ const melodyExtractor = {
 
     // Predefined song suggestions
     suggestedSongs: [
+        "Random Tones",
         "Twinkle Twinkle Little Star",
         "Fur Elise",
         "Happy Birthday",
@@ -168,11 +169,19 @@ const melodyExtractor = {
 
     // Check if the song has a predefined melody
     hasPredefinedMelody(songName) {
+        if (songName === "Random Tones") {
+            return true; // Special case - handled differently
+        }
         return !!this.predefinedMelodies[songName];
     },
 
     // Get a predefined melody
     getPredefinedMelody(songName) {
+        if (songName === "Random Tones") {
+            // Special case - trigger procedural melody
+            // Return empty array to signal we should use the procedural system
+            return [];
+        }
         return this.predefinedMelodies[songName] ? [...this.predefinedMelodies[songName]] : null;
     },
 

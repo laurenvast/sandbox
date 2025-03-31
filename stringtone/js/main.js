@@ -16,7 +16,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const musicIcon = document.getElementById('musicIcon');
 
     // Default song for autoplay
-    const DEFAULT_SONG = "Twinkle Twinkle Little Star";
+    const DEFAULT_SONG = "Random Tones";
 
     // Initialize application
     initUI();
@@ -40,6 +40,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Add a status check interval to ensure UI stays in sync
         setInterval(ensureCorrectStatusClass, 2000);
+
+        // Prevent clicks inside the unified player from closing the panel
+        unifiedPlayer.addEventListener('click', (e) => {
+            e.stopPropagation();
+        });
     }
 
     // Setup all event listeners
@@ -70,6 +75,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Check scrolling when window is resized
         window.addEventListener('resize', checkAndApplyScrolling);
+
+        // Close song panel when clicking outside the unified player
+        document.addEventListener('click', (e) => {
+            // If the song panel is active and the click is outside the unified player
+            if (songPanel.classList.contains('active') && !e.target.closest('#unifiedPlayer')) {
+                // Close the song panel
+                songPanel.classList.remove('active');
+            }
+        });
     }
 
     // Toggle play/pause
@@ -177,6 +191,33 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Initialize default song
     function initDefaultSong() {
+        // Special handling for Unknown Melody default
+        if (DEFAULT_SONG === "Random Tones") {
+            console.log("Initializing Unknown Melody as default");
+
+            // Set Unknown Melody directly without going through extraction
+            setSongMelody([], DEFAULT_SONG);
+
+            // Update the UI
+            updateCurrentSongDisplay(DEFAULT_SONG, true);
+
+            // Ensure proper status feedback
+            setTimeout(() => {
+                // Make sure play button shows as playing
+                if (playPauseButton) {
+                    playPauseButton.textContent = "⏸";
+                }
+                if (currentSongName) {
+                    currentSongName.classList.add('status-playing');
+                    currentSongName.classList.remove('status-paused');
+                }
+                updatePlayerStatus();
+            }, 300);
+
+            return;
+        }
+
+        // Regular flow for other predefined melodies
         if (melodyExtractor.hasPredefinedMelody(DEFAULT_SONG)) {
             console.log(`Setting up default song: ${DEFAULT_SONG}`);
             songNameInput.value = DEFAULT_SONG;
@@ -199,6 +240,30 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Extract melody from a song
     async function extractMelodyFromSong(songName) {
+        // Special case for Unknown Melody - never show extraction failure
+        if (songName === "Random Tones") {
+            console.log("Special handling for Random Tones");
+
+            // Skip the normal extraction UI updates
+            if (extractButton) {
+                extractButton.disabled = false;
+            }
+
+            // Set the melody directly using the special case in setSongMelody
+            setSongMelody([], songName);
+
+            // Update UI to show success
+            if (extractionStatus) {
+                extractionStatus.textContent = `"${songName}" loaded`;
+            }
+
+            // Make sure the UI is updated to show it's playing
+            updateCurrentSongDisplay(songName, true);
+
+            return;
+        }
+
+        // Regular extraction flow for other songs
         // Update UI to show extraction is in progress
         updateUIForExtractionStart(songName);
 
@@ -334,6 +399,14 @@ document.addEventListener('DOMContentLoaded', () => {
     // Handle failed extraction
     function handleFailedExtraction(songName) {
         try {
+            // Never show extraction failure for Unknown Melody
+            if (songName === "Random Tones") {
+                console.log("Preventing extraction failure for Unknown Melody");
+                // Instead, treat it as a special case and set it directly
+                setSongMelody([], songName);
+                return;
+            }
+
             console.warn(`Failed to extract melody for "${songName}"`);
 
             if (extractionStatus) {
@@ -489,6 +562,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Reset all status classes
         resetStatusClasses();
+
+        // Special case for Unknown Melody - always make it active/playing
+        if (songName === "Random Tones") {
+            isActive = true;
+        }
 
         // Combine song name with status (playing/paused)
         if (songName && songName !== 'None') {

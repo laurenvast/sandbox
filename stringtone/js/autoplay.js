@@ -119,8 +119,38 @@ function setSongMelody(melodyNotes, songName) {
         // Reset the playback state
         resetPlaybackState();
 
+        // Special case for "Unknown Melody" - use procedural system
+        if (songName === "Random Tones" && (!melodyNotes || melodyNotes.length === 0)) {
+            console.log('Playing with procedural "Random Tones" system');
+
+            // Set the current song name
+            autoPlay.currentSongName = songName;
+
+            // Set flag to indicate we're NOT using an extracted song melody
+            autoPlay.usingSongMelody = false;
+
+            // Choose a random melody type for variety
+            autoPlay.melodyType = ['arpeggio', 'scale', 'random', 'cluster'][Math.floor(Math.random() * 4)];
+
+            // Generate a fresh musical pattern
+            generateMusicalPattern();
+
+            // Update the current song display and ensure it shows as playing
+            updateCurrentSongDisplayIfExists(autoPlay.currentSongName, true);
+
+            // Ensure autoPlay is enabled
+            autoPlay.enabled = true;
+
+            // Make sure to start auto-play immediately without delay
+            startAutoPlay();
+
+            // Always release the lock
+            autoPlay.isChangingSong = false;
+            return;
+        }
+
         // Set the current song name
-        autoPlay.currentSongName = songName || 'Unknown Melody';
+        autoPlay.currentSongName = songName || 'Random Tones';
 
         // Update the current song display if it exists
         updateCurrentSongDisplayIfExists(autoPlay.currentSongName, true);
